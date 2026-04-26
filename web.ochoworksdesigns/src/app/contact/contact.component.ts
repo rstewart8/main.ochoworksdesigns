@@ -1,10 +1,11 @@
-import { Component, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { RecaptchaModule } from 'ng-recaptcha-2';
 import { environment } from '../../environments/environment';
 import { CommonModule } from '@angular/common';
 import { ContactService, ContactFormData } from '../_services/contact.service';
 import { AnalyticsService } from '../_services/google-analytics.service';
+import { SEOService } from '../_services/seo.service';
 
 @Component({
   selector: 'app-contact',
@@ -12,7 +13,7 @@ import { AnalyticsService } from '../_services/google-analytics.service';
   templateUrl: './contact.component.html',
   styleUrl: './contact.component.css'
 })
-export class ContactComponent {
+export class ContactComponent implements OnInit {
   contactForm: FormGroup;
   recaptchaResponse: string | null = null;
   characterCount: number = 0;
@@ -21,6 +22,7 @@ export class ContactComponent {
   submitSuccess: boolean = false;
   submitError: string | null = null;
   private analytics = inject(AnalyticsService);
+  private seoService = inject(SEOService);
 
   // Get reCAPTCHA site key from environment
   recaptchaSiteKey: string = environment.recaptchaSiteKey;
@@ -38,6 +40,31 @@ export class ContactComponent {
     // Watch for changes in the message field to update character count
     this.contactForm.get('message')?.valueChanges.subscribe(value => {
       this.characterCount = value ? value.length : 0;
+    });
+  }
+
+  ngOnInit(): void {
+    this.seoService.updateSEO({
+      title: 'Contact OchoWorks Designs',
+      description: 'Contact OchoWorks Designs to start a custom home plan, request a quote, or discuss drafting services for homeowners, builders, and contractors.',
+      image: '/assets/images/8-logo.png',
+      url: 'https://ochoworksdesigns.com/contact',
+      type: 'website',
+      schema: {
+        '@context': 'https://schema.org',
+        '@type': 'LocalBusiness',
+        name: 'OchoWorks Designs',
+        url: 'https://ochoworksdesigns.com/contact',
+        image: 'https://ochoworksdesigns.com/assets/images/8-logo.png',
+        telephone: '+1-435-680-1097',
+        email: 'randy@ochoworksdesigns.com',
+        description: 'Custom home design and residential drafting services for homeowners, builders, and contractors.',
+        sameAs: [
+          'https://www.facebook.com/OchoWorksDesigns',
+          'https://www.instagram.com/ochoworksdesigns/',
+          'https://www.pinterest.com/OchoWorksDesignsandDrafting'
+        ]
+      }
     });
   }
 
@@ -59,7 +86,6 @@ export class ContactComponent {
   }
 
   onSubmit(): void {
-    this.analytics.trackFormSubmit('contact_form');
     // Clear previous status
     this.submitSuccess = false;
     this.submitError = null;
@@ -79,6 +105,8 @@ export class ContactComponent {
       this.contactService.submitContact(formData).subscribe({
         next: (response) => {
           console.log('Message sent successfully', response);
+          this.analytics.trackGenerateLead('contact_form');
+          this.analytics.trackFormSubmit('contact_form');
           this.submitSuccess = true;
           this.contactForm.reset();
           this.recaptchaResponse = null;

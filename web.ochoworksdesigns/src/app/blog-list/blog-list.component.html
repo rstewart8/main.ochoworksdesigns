@@ -13,7 +13,7 @@
       <h2 class="section-title">Featured Posts</h2>
       <div class="featured-grid">
         <article *ngFor="let post of featuredPosts; trackBy: trackByFn" class="featured-post"
-          [routerLink]="['/blog', post.slug]" (click)="incrementViews(post)">
+          [routerLink]="['/blog/list', post.slug]" (click)="incrementViews(post)">
           <div class="featured-image">
             <img [src]="getFeaturedImage(post)" [alt]="getFeaturedImageAlt(post)" class="post-image" loading="lazy">
             <div class="featured-badge">Featured</div>

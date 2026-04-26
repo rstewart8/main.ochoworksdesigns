@@ -1,7 +1,7 @@
-import { Injectable, Inject, PLATFORM_ID, ComponentFactoryResolver } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import { Injectable, Inject } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
 import { Router } from '@angular/router';
-import { isPlatformBrowser } from '@angular/common';
 import { BlogPost } from './blog.service';
 
 export interface SEOData {
@@ -23,7 +23,6 @@ export interface SEOData {
   providedIn: 'root'
 })
 export class SEOService {
-  private isBrowser: boolean;
   private readonly baseUrl = 'https://ochoworksdesigns.com';
   private readonly defaultImage = '/assets/images/8-logo.png';
   private readonly siteName = 'OchoWorks Designs';
@@ -32,10 +31,8 @@ export class SEOService {
     private meta: Meta,
     private title: Title,
     private router: Router,
-    @Inject(PLATFORM_ID) private platformId: Object
-  ) {
-    this.isBrowser = isPlatformBrowser(this.platformId);
-  }
+    @Inject(DOCUMENT) private document: Document
+  ) {}
 
   updateSEO(data: SEOData): void {
     // Update title
@@ -59,7 +56,7 @@ export class SEOService {
 
     // Update canonical URL
     const url = data.url || this.getCurrentUrl();
-    this.meta.updateTag({ rel: 'canonical', href: url });
+    this.updateCanonicalUrl(url);
     this.meta.updateTag({ property: 'og:url', content: url });
     this.meta.updateTag({ name: 'twitter:url', content: url });
 
@@ -115,7 +112,7 @@ export class SEOService {
       description: post.meta_description || post.excerpt,
       keywords: post.meta_keywords || (post.tags ? post.tags.join(', ') : ''),
       image: post.featured_image,
-      url: `${this.baseUrl}/blog/${post.slug}`,
+      url: `${this.baseUrl}/blog/list/${post.slug}`,
       type: 'article',
       author: post.author,
       publishedTime: post.published_at,
@@ -166,12 +163,12 @@ export class SEOService {
       dateModified: post.updated_at,
       mainEntityOfPage: {
         '@type': 'WebPage',
-        '@id': `${this.baseUrl}/blog/${post.slug}`
+        '@id': `${this.baseUrl}/blog/list/${post.slug}`
       },
       keywords: post.tags ? post.tags.join(', ') : '',
       wordCount: this.calculateWordCount(post.content),
       timeRequired: `PT${post.read_time || this.calculateReadTime(post.content)}M`,
-      url: `${this.baseUrl}/blog/${post.slug}`
+      url: `${this.baseUrl}/blog/list/${post.slug}`
     };
   }
 
@@ -200,19 +197,30 @@ export class SEOService {
   }
 
   private updateStructuredData(schema: any): void {
-    if (!this.isBrowser) return;
-
     // Remove existing structured data
-    const existingScript = document.querySelector('script[type="application/ld+json"]');
+    const existingScript = this.document.querySelector('script[type="application/ld+json"][data-app-seo="true"]');
     if (existingScript) {
       existingScript.remove();
     }
 
     // Add new structured data
-    const script = document.createElement('script');
+    const script = this.document.createElement('script');
     script.type = 'application/ld+json';
+    script.setAttribute('data-app-seo', 'true');
     script.text = JSON.stringify(schema);
-    document.head.appendChild(script);
+    this.document.head.appendChild(script);
+  }
+
+  private updateCanonicalUrl(url: string): void {
+    let link = this.document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+
+    if (!link) {
+      link = this.document.createElement('link');
+      link.setAttribute('rel', 'canonical');
+      this.document.head.appendChild(link);
+    }
+
+    link.setAttribute('href', url);
   }
 
   private getCurrentUrl(): string {
@@ -247,12 +255,9 @@ export class SEOService {
     this.meta.removeTag('property="article:modified_time"');
     this.meta.removeTag('property="article:tag"');
     
-    // Remove structured data
-    if (this.isBrowser) {
-      const existingScript = document.querySelector('script[type="application/ld+json"]');
-      if (existingScript) {
-        existingScript.remove();
-      }
+    const existingScript = this.document.querySelector('script[type="application/ld+json"][data-app-seo="true"]');
+    if (existingScript) {
+      existingScript.remove();
     }
   }
 

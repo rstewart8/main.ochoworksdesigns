@@ -108,10 +108,24 @@ export class BlogListComponent implements OnInit, OnDestroy {
 
   private updateSEO(): void {
     this.seoService.updateSEO({
-      title: 'Custom Home Plans & Architectural Designs | OchoWorks Designs Blog',
+      title: 'Custom Home Plans & Design Insights Blog',
       description: 'Discover expert insights on custom home plans, architectural designs, and building tips from OchoWorks Designs. Browse our collection of modern farmhouse, contemporary, and traditional home designs.',
       type: 'website',
-      url: this.isBrowser ? window.location.href : undefined
+      image: '/assets/images/custom-home-rendering-1.jpg',
+      url: 'https://ochoworksdesigns.com/blog/list',
+      schema: {
+        '@context': 'https://schema.org',
+        '@type': 'Blog',
+        name: 'OchoWorks Designs Blog',
+        url: 'https://ochoworksdesigns.com/blog/list',
+        description: 'Custom home plans, architectural design insights, and building tips from OchoWorks Designs.',
+        publisher: {
+          '@type': 'Organization',
+          name: 'OchoWorks Designs',
+          url: 'https://ochoworksdesigns.com',
+          logo: 'https://ochoworksdesigns.com/assets/images/8-logo.png'
+        }
+      }
     });
   }
 

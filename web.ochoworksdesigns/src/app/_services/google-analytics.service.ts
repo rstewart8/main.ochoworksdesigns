@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { AuthService } from './auth.service';
 
 declare let gtag: Function;
 
@@ -6,13 +7,21 @@ declare let gtag: Function;
   providedIn: 'root'
 })
 export class AnalyticsService {
-
-  constructor() { }
+  constructor(private authService: AuthService) { }
 
   // Track custom events
   trackEvent(eventName: string, parameters?: any): void {
-    if (typeof gtag !== 'undefined') {
+    if (this.shouldTrack()) {
       gtag('event', eventName, parameters);
+    }
+  }
+
+  trackPageView(pageTitle: string, pageLocation: string): void {
+    if (this.shouldTrack()) {
+      gtag('event', 'page_view', {
+        page_title: pageTitle,
+        page_location: pageLocation
+      });
     }
   }
 
@@ -28,6 +37,12 @@ export class AnalyticsService {
   trackFormSubmit(formName: string): void {
     this.trackEvent('form_submit', {
       form_name: formName
+    });
+  }
+
+  trackGenerateLead(method: string): void {
+    this.trackEvent('generate_lead', {
+      method
     });
   }
 
@@ -47,8 +62,13 @@ export class AnalyticsService {
 
   // Track plan selections
   trackPlanSelect(planName: string): void {
-    this.trackEvent('plan_select', {
-      plan_name: planName
+    this.trackEvent('select_content', {
+      content_type: 'house_plan',
+      item_id: planName
     });
+  }
+
+  private shouldTrack(): boolean {
+    return typeof gtag !== 'undefined' && !this.authService.isLoggedIn();
   }
 }
