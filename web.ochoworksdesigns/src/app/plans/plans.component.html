@@ -1,0 +1,260 @@
+<div class="plans-container">
+  <!-- Page Header -->
+  <div class="plans-header">
+    <h1 class="page-title">House Plans</h1>
+    <p class="page-subtitle">Discover your perfect home from our collection of professionally designed house plans</p>
+  </div>
+
+  <!-- Admin Status Filter -->
+  <div *ngIf="isAdmin()" class="status-filter-container">
+    <div class="status-filter">
+      <label class="filter-label">Filter by Status:</label>
+      <div class="status-multiselect">
+        <button class="status-dropdown-toggle" (click)="toggleStatusDropdown()">
+          <span class="selected-statuses">
+            {{ selectedStatuses.length === 1 ? selectedStatuses[0] : selectedStatuses.length + ' selected' }}
+          </span>
+          <span class="dropdown-arrow" [class.open]="showStatusDropdown">▼</span>
+        </button>
+        
+        <div class="status-dropdown" [class.show]="showStatusDropdown">
+          <div class="status-option" *ngFor="let status of availableStatuses">
+            <label class="checkbox-label">
+              <input 
+                type="checkbox" 
+                [checked]="isStatusSelected(status.value)"
+                (change)="toggleStatus(status.value)"
+                class="status-checkbox">
+              <span class="checkbox-custom"></span>
+              <span class="status-label">{{ status.label }}</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="loading-spinner"></div>
+    <p>Loading house plans...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="error-container">
+    <div class="error-message">
+      <h3>Oops! Something went wrong</h3>
+      <p>{{ error }}</p>
+      <button class="retry-button" (click)="loadPlans(currentPage)">Try Again</button>
+    </div>
+  </div>
+
+  <!-- Plans Grid -->
+  <div *ngIf="!loading && !error" class="plans-content">
+    <!-- Results Info -->
+    <div class="results-info">
+      <p>Showing {{ plans.length }} of {{ totalItems }} plans</p>
+    </div>
+
+    <!-- Plans Grid -->
+    <div class="plans-grid" *ngIf="plans.length > 0">
+      <div class="plan-card" *ngFor="let plan of plans">
+        <!-- Plan Images -->
+        <div class="plan-image-container">
+          
+          <!-- Rendering Images -->
+          <div class="plan-image-wrapper" *ngIf="hasImagesOfType(plan, 'rendering')">
+            <div class="image-type-header">
+              <h1 class="image-type-title">Views</h1>
+              <span class="image-counter" *ngIf="shouldShowNavigation(plan, 'rendering')">
+                {{ getImageIndexDisplay(plan, 'rendering') }}
+              </span>
+            </div>
+            <div class="image-display-container">
+              <ng-container *ngIf="getCurrentImage(plan, 'rendering') as currentImage">
+                <img [src]="currentImage.image_url"
+                     [alt]="currentImage.alt_text || plan.title + ' - Rendering'"
+                     class="plan-image"
+                     loading="lazy">
+                
+                <div class="image-overlay">
+                  <button class="preview-btn" (click)="openImageModal(currentImage.image_url)">
+                    Preview
+                  </button>
+                </div>
+                
+                <!-- Navigation arrows -->
+                <div class="image-navigation" *ngIf="shouldShowNavigation(plan, 'rendering')">
+                  <button class="nav-arrow nav-arrow-left" 
+                          (click)="previousImage(plan, 'rendering')"
+                          aria-label="Previous rendering">
+                    ‹
+                  </button>
+                  <button class="nav-arrow nav-arrow-right" 
+                          (click)="nextImage(plan, 'rendering')"
+                          aria-label="Next rendering">
+                    ›
+                  </button>
+                </div>
+              </ng-container>
+            </div>
+          </div>
+
+          <!-- Floor Plan Images -->
+          <div class="plan-image-wrapper" *ngIf="hasImagesOfType(plan, 'floor_plan')">
+            <div class="image-type-header"> 
+              <h1 class="image-type-title">Floor Plans</h1>
+              <span class="image-counter" *ngIf="shouldShowNavigation(plan, 'floor_plan')">
+                {{ getImageIndexDisplay(plan, 'floor_plan') }}
+              </span>
+            </div>
+            
+            <div class="image-display-container">
+              <ng-container *ngIf="getCurrentImage(plan, 'floor_plan') as currentImage">
+                <img [src]="currentImage.image_url"
+                     [alt]="currentImage.alt_text || plan.title + ' - Floor Plan'"
+                     class="plan-image"
+                     loading="lazy">
+                
+                <div class="image-overlay">
+                  <button class="preview-btn" (click)="openImageModal(currentImage.image_url)">
+                    Preview
+                  </button>
+                </div>
+                
+                <!-- Navigation arrows -->
+                <div class="image-navigation" *ngIf="shouldShowNavigation(plan, 'floor_plan')">
+                  <button class="nav-arrow nav-arrow-left" 
+                          (click)="previousImage(plan, 'floor_plan')"
+                          aria-label="Previous floor plan">
+                    ‹
+                  </button>
+                  <button class="nav-arrow nav-arrow-right" 
+                          (click)="nextImage(plan, 'floor_plan')"
+                          aria-label="Next floor plan">
+                    ›
+                  </button>
+                </div>
+              </ng-container>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Plan Info -->
+        <div class="plan-info">
+          <div class="plan-header">
+            <h3 class="plan-title">{{ plan.title }}</h3>
+            <div class="plan-badges">
+              <span class="plan-no">{{ plan.plan_no }}</span>
+              <span *ngIf="isAdmin()" class="plan-status" [class]="getStatusClass(plan.status)">
+                {{ getStatusDisplayText(plan.status) }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Plan Specifications -->
+          <div class="plan-specs">
+            <div class="spec-item" *ngFor="let spec of getDisplaySpecs(plan)">
+              {{ spec }}
+            </div>
+          </div>
+
+          <!-- Plan Description -->
+          <p class="plan-description">{{ plan.description }}</p>
+
+          <!-- Plan Actions -->
+          <div class="plan-actions">
+            <button class="action-btn primary" [routerLink]="['/plan', plan.id]">
+              View Plan
+            </button>
+            <button class="action-btn secondary" [routerLink]="['/contact']" [queryParams]="{plan: plan.plan_no}">
+              Get Quote
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="plans.length === 0" class="empty-state">
+      <div class="empty-content">
+        <h3>No Plans Found</h3>
+        <p>We couldn't find any house plans at the moment. Please check back later.</p>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination-container" *ngIf="totalPages > 1">
+      <nav class="pagination" aria-label="House plans pagination">
+        <!-- Previous Button -->
+        <button 
+          class="pagination-btn prev" 
+          [disabled]="!hasPrevious"
+          (click)="previousPage()"
+          aria-label="Previous page">
+          <span aria-hidden="true">‹</span>
+          Previous
+        </button>
+
+        <!-- Page Numbers -->
+        <div class="page-numbers">
+          <!-- First page if not visible -->
+          <button 
+            *ngIf="getPageNumbers()[0] > 1"
+            class="page-btn"
+            (click)="goToPage(1)">
+            1
+          </button>
+          
+          <!-- Ellipsis if needed -->
+          <span *ngIf="getPageNumbers()[0] > 2" class="pagination-ellipsis">...</span>
+
+          <!-- Visible page numbers -->
+          <button 
+            *ngFor="let page of getPageNumbers()"
+            class="page-btn"
+            [class.active]="page === currentPage"
+            (click)="goToPage(page)"
+            [attr.aria-current]="page === currentPage ? 'page' : null">
+            {{ page }}
+          </button>
+
+          <!-- Ellipsis if needed -->
+          <span *ngIf="getPageNumbers()[getPageNumbers().length - 1] < totalPages - 1" class="pagination-ellipsis">...</span>
+
+          <!-- Last page if not visible -->
+          <button 
+            *ngIf="getPageNumbers()[getPageNumbers().length - 1] < totalPages"
+            class="page-btn"
+            (click)="goToPage(totalPages)">
+            {{ totalPages }}
+          </button>
+        </div>
+
+        <!-- Next Button -->
+        <button 
+          class="pagination-btn next" 
+          [disabled]="!hasNext"
+          (click)="nextPage()"
+          aria-label="Next page">
+          Next
+          <span aria-hidden="true">›</span>
+        </button>
+      </nav>
+
+      <!-- Pagination Info -->
+      <div class="pagination-info">
+        <p>Page {{ currentPage }} of {{ totalPages }} ({{ totalItems }} total plans)</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Image Modal -->
+  <div class="image-modal" [class.active]="showImageModal" (click)="closeImageModal($event)">
+    <div class="modal-content">
+      <button class="modal-close" (click)="closeImageModal()">&times;</button>
+      <img class="modal-image" [src]="selectedImageUrl" alt="Full size preview">
+    </div>
+  </div>
+</div>

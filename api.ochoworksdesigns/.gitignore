@@ -1,0 +1,10 @@
+
+# Ignore all files in the files directory
+files/
+files/*
+
+# Environment files
+.env
+.env.local
+.env.*.local
+public/sitemap.xml

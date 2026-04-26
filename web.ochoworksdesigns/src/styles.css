@@ -1,0 +1,75 @@
+/* Global styles for consistent page layout */
+/* Add this to your global styles.css file */
+
+/* Base styles for all page containers */
+.page-container {
+  padding-top: 70px; /* Account for fixed header */
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+}
+
+/* Standard page heading that appears just below header */
+.page-heading {
+  margin: 0;
+  padding: 2rem 1rem;
+  text-align: center;
+  color: #333;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 2.5rem;
+  font-weight: 700;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 5;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  border-radius: 10px;
+  margin: 1rem;
+}
+
+/* Content sections with overlay effect */
+.content-section {
+  padding: 2rem 1rem;
+  max-width: 1200px;
+  margin: 2rem auto;
+  position: relative;
+  z-index: 5;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 15px;
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 768px) {
+  .page-container {
+    padding-top: 60px;
+  }
+  
+  .page-heading {
+    font-size: 2rem;
+    padding: 1.5rem 1rem;
+  }
+  
+  .content-section {
+    margin: 1rem;
+    padding: 1.5rem 1rem;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .page-container {
+    padding-top: 55px;
+  }
+  
+  .page-heading {
+    font-size: 1.8rem;
+    padding: 1rem;
+  }
+  
+  .content-section {
+    margin: 0.5rem;
+    padding: 1rem;
+  }
+}

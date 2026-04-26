@@ -1,0 +1,125 @@
+<div class="campaign-detail-container">
+  <div class="page-header">
+    <div class="header-left">
+      <a routerLink="/admin/marketing/campaigns" class="back-link">← Back to Campaign: {{ campaign?.name || 'Campaign' }}</a>
+      <h1 class="page-title">{{ campaign?.name || 'Campaign' }}</h1>
+      <p class="page-subtitle">Manage email campaigns under this campaign.</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-primary" (click)="createEmailCampaign()" [disabled]="!campaignId">
+        + New Email Campaign
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="successMessage" class="message success-message">
+    <span>✓</span> {{ successMessage }}
+  </div>
+
+  <div *ngIf="error" class="message error-message">
+    <span>⚠</span> {{ error }}
+  </div>
+
+  <div class="meta-card" *ngIf="campaign">
+    <p><strong>Campaign ID:</strong> {{ campaign.id }}</p>
+    <p><strong>Status:</strong> {{ campaign.status }}</p>
+    <p><strong>Created:</strong> {{ formatDateTime(campaign.created_at) }}</p>
+  </div>
+
+  <div class="totals-summary" *ngIf="!loading && !loadingEmailCampaigns">
+    <div class="totals-header">
+      <h2>Campaign Totals (Cumulative)</h2>
+      <span class="totals-meta">{{ emailCampaigns.length }} email campaign{{ emailCampaigns.length === 1 ? '' : 's' }}</span>
+    </div>
+    <div class="totals-grid">
+      <div class="totals-item"><span>Recipients</span><strong>{{ cumulativeTotals.total_recipients }}</strong></div>
+      <div class="totals-item"><span>Sent</span><strong>{{ cumulativeTotals.total_sent }}</strong></div>
+      <div class="totals-item"><span>Opened</span><strong>{{ cumulativeTotals.total_opened }}</strong></div>
+      <div class="totals-item"><span>Clicked</span><strong>{{ cumulativeTotals.total_clicked }}</strong></div>
+      <div class="totals-item"><span>Bounced</span><strong>{{ cumulativeTotals.total_bounced }}</strong></div>
+      <div class="totals-item"><span>Unsubscribed</span><strong>{{ cumulativeTotals.total_unsubscribed }}</strong></div>
+    </div>
+  </div>
+
+  <div class="filters-section">
+    <div class="filters-row">
+      <div class="search-box">
+        <input
+          type="text"
+          [(ngModel)]="searchQuery"
+          placeholder="Search email campaigns by name/subject..."
+          class="search-input"
+          (keyup.enter)="onSearch()"
+        >
+        <button class="search-btn" (click)="onSearch()">🔍</button>
+      </div>
+
+      <select class="filter-select" [(ngModel)]="selectedStatus" (change)="onStatusChange()">
+        <option *ngFor="let option of statusOptions" [value]="option.value">
+          {{ option.label }}
+        </option>
+      </select>
+
+      <button *ngIf="hasActiveFilters()" class="btn btn-secondary" (click)="clearFilters()">
+        Clear Filters
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="loading || loadingEmailCampaigns" class="loading-container">
+    <div class="loading-spinner"></div>
+    <p>Loading campaign data...</p>
+  </div>
+
+  <div *ngIf="!loading && !loadingEmailCampaigns && emailCampaigns.length === 0" class="empty-state">
+    <h3>No email campaigns yet</h3>
+    <p>Create an email campaign whenever you are ready.</p>
+    <button class="btn btn-primary" (click)="createEmailCampaign()">Create Email Campaign</button>
+  </div>
+
+  <div *ngIf="!loading && !loadingEmailCampaigns && emailCampaigns.length > 0" class="email-campaigns-list">
+    <div class="email-campaign-card" *ngFor="let emailCampaign of emailCampaigns">
+      <div class="card-main">
+        <h3>{{ emailCampaign.name }}</h3>
+        <p class="subject">{{ emailCampaign.subject }}</p>
+        <div class="meta-row">
+          <span class="status-badge" [ngClass]="getStatusClass(emailCampaign.status)">
+            {{ getStatusLabel(emailCampaign.status) }}
+          </span>
+          <span>Created {{ formatDate(emailCampaign.created_at) }}</span>
+        </div>
+        <div class="campaign-totals-grid">
+          <div class="campaign-total"><span>Recipients</span><strong>{{ toNumber(emailCampaign.total_recipients) }}</strong></div>
+          <div class="campaign-total"><span>Sent</span><strong>{{ toNumber(emailCampaign.total_sent) }}</strong></div>
+          <div class="campaign-total"><span>Opened</span><strong>{{ toNumber(emailCampaign.total_opened) }}</strong></div>
+          <div class="campaign-total"><span>Clicked</span><strong>{{ toNumber(emailCampaign.total_clicked) }}</strong></div>
+          <div class="campaign-total"><span>Bounced</span><strong>{{ toNumber(emailCampaign.total_bounced) }}</strong></div>
+          <div class="campaign-total"><span>Unsubscribed</span><strong>{{ toNumber(emailCampaign.total_unsubscribed) }}</strong></div>
+        </div>
+      </div>
+      <div class="card-actions">
+        <button class="action-btn" (click)="editEmailCampaign(emailCampaign)" title="Edit Email Campaign">✏️</button>
+        <button class="action-btn danger" (click)="confirmDeleteEmailCampaign(emailCampaign)" title="Delete Email Campaign">🗑️</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" *ngIf="showDeleteModal" (click)="cancelDeleteEmailCampaign()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Delete Email Campaign</h3>
+      <button class="modal-close" (click)="cancelDeleteEmailCampaign()">×</button>
+    </div>
+    <div class="modal-body">
+      <p>Are you sure you want to delete this email campaign?</p>
+      <p *ngIf="emailCampaignToDelete"><strong>{{ emailCampaignToDelete.name }}</strong></p>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" (click)="cancelDeleteEmailCampaign()" [disabled]="deleting">Cancel</button>
+      <button class="btn btn-danger" (click)="deleteEmailCampaign()" [disabled]="deleting">
+        {{ deleting ? 'Deleting...' : 'Delete' }}
+      </button>
+    </div>
+  </div>
+</div>

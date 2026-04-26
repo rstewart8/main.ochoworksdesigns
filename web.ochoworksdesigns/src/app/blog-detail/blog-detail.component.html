@@ -1,0 +1,257 @@
+<div class="blog-detail-container" (keydown)="onKeydown($event)">
+    <!-- Loading State -->
+    <div *ngIf="loading" class="loading-container">
+        <div class="loading-spinner"></div>
+        <p>Loading post...</p>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="error && !loading" class="error-container">
+        <div class="error-message">
+            <h2>Post Not Found</h2>
+            <p>{{ error }}</p>
+            <div class="error-actions">
+                <button class="action-btn primary" (click)="goBack()">Back to Blogs</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Post Content -->
+    <article *ngIf="post && !loading && !error" class="post-article">
+        <!-- Post Header -->
+        <header class="post-header">
+            <div class="container">
+                <div class="post-navigation">
+                    <button class="back-btn" (click)="goBack()" title="Back to Blogs">
+                        ← Back to Blogs
+                    </button>
+
+                    <!-- Edit button positioned alongside navigation -->
+                    <button *ngIf="isAdmin()" class="action-btn secondary edit-btn"
+                        [routerLink]="['/admin/blog/edit', slug]" title="Edit this post">
+                        <span class="action-icon">✏️</span>
+                        Edit Post
+                    </button>
+                </div>
+
+                <div class="post-meta-info">
+                    <div class="post-category" *ngIf="post.category">
+                        <button class="category-link" (click)="navigateToCategory(post.category)">
+                            {{ post.category }}
+                        </button>
+                    </div>
+                    <div class="post-stats">
+                        <span class="post-date">{{ formatDate(post.published_at || post.created_at) }}</span>
+                        <span class="post-author">By {{ post.author }}</span>
+                        <span *ngIf="post.read_time" class="read-time">{{ post.read_time }} min read</span>
+                        <span *ngIf="post.views" class="views-count">{{ post.views }} views</span>
+                    </div>
+                </div>
+
+                <h1 class="post-title">{{ post.title }}</h1>
+
+                <p class="post-excerpt" *ngIf="post.excerpt">{{ post.excerpt }}</p>
+
+                <!-- Social Share -->
+                <div class="social-share">
+                    <span class="share-label">Share:</span>
+                    <div class="share-buttons">
+                        <button class="share-btn twitter" (click)="sharePost('twitter')" title="Share on Twitter">
+                            🐦
+                        </button>
+                        <button class="share-btn facebook" (click)="sharePost('facebook')" title="Share on Facebook">
+                            📘
+                        </button>
+                        <button class="share-btn linkedin" (click)="sharePost('linkedin')" title="Share on LinkedIn">
+                            💼
+                        </button>
+                        <button class="share-btn email" (click)="sharePost('email')" title="Share via Email">
+                            📧
+                        </button>
+                        <button class="share-btn copy" (click)="copyLink()" title="Copy Link">
+                            🔗
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Featured Image -->
+        <div class="featured-image-container" *ngIf="getFeaturedImage(post)">
+            <div class="container">
+                <img [src]="getFeaturedImage(post)" [alt]="getFeaturedImageAlt(post)" class="featured-image"
+                    (click)="openImageGallery(0)" loading="lazy">
+            </div>
+        </div>
+
+        <!-- Post Content -->
+        <div class="post-content-wrapper">
+            <div class="container">
+                <div class="post-layout">
+                    <!-- Main Content -->
+                    <div class="post-main">
+                        <div class="post-content" [innerHTML]="post.content"></div>
+
+                        <!-- Additional Images -->
+                        <div *ngIf="getPostImages(post).length > 1" class="additional-images">
+                            <h3 class="images-title">Gallery</h3>
+                            <div class="images-grid">
+                                <div *ngFor="let image of getPostImages(post); let i = index; trackBy: trackByFn"
+                                    class="image-item" [class.featured]="image.isFeatured"
+                                    (click)="openImageGallery(i)">
+                                    <img [src]="image.image_url" [alt]="image.alt_text || post.title"
+                                        class="gallery-image" loading="lazy">
+                                    <div class="image-overlay">
+                                        <span class="zoom-icon">🔍</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tags -->
+                        <div *ngIf="post.tags && post.tags.length > 0" class="post-tags-section">
+                            <h4 class="tags-title">Tags</h4>
+                            <div class="post-tags">
+                                <button *ngFor="let tag of post.tags" class="tag-btn" (click)="navigateToTag(tag)">
+                                    {{ tag }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sidebar -->
+                    <aside class="post-sidebar">
+                        <!-- Post Info Card -->
+                        <div class="info-card">
+                            <h4 class="card-title">Post Information</h4>
+                            <div class="info-item">
+                                <strong>Author:</strong> {{ post.author }}
+                            </div>
+                            <div class="info-item" *ngIf="post.category">
+                                <strong>Category:</strong>
+                                <button class="inline-link" (click)="navigateToCategory(post.category)">
+                                    {{ post.category }}
+                                </button>
+                            </div>
+                            <div class="info-item">
+                                <strong>Published:</strong> {{ formatDate(post.published_at || post.created_at) }}
+                            </div>
+                            <div class="info-item" *ngIf="post.updated_at !== post.created_at">
+                                <strong>Updated:</strong> {{ formatDate(post.updated_at) }}
+                            </div>
+                            <div class="info-item" *ngIf="getReadingTime(post.content) > 0">
+                                <strong>Reading Time:</strong> {{ getReadingTime(post.content) }} minutes
+                            </div>
+                            <div class="info-item" *ngIf="post.views">
+                                <strong>Views:</strong> {{ post.views }}
+                            </div>
+                        </div>
+
+                        <!-- Recent Posts -->
+                        <div *ngIf="recentPosts.length > 0" class="info-card">
+                            <h4 class="card-title">Recent Posts</h4>
+                            <div class="recent-posts">
+                                <article *ngFor="let recentPost of recentPosts; trackBy: trackByFn" class="recent-post"
+                                    [routerLink]="['/blog', recentPost.slug]">
+                                    <div class="recent-post-image" *ngIf="getFeaturedImage(recentPost)">
+                                        <img [src]="getFeaturedImage(recentPost)"
+                                            [alt]="getFeaturedImageAlt(recentPost)" loading="lazy">
+                                    </div>
+                                    <div class="recent-post-content">
+                                        <h5 class="recent-post-title">{{ recentPost.title }}</h5>
+                                        <span class="recent-post-date">{{ formatDate(recentPost.published_at ||
+                                            recentPost.created_at) }}</span>
+                                    </div>
+                                </article>
+                            </div>
+                        </div>
+
+                        <!-- Back to Top -->
+                        <button class="back-to-top-btn" (click)="scrollToTop()" title="Back to top">
+                            ↑ Top
+                        </button>
+                    </aside>
+                </div>
+            </div>
+        </div>
+
+        <!-- Related Posts -->
+        <section *ngIf="relatedPosts.length > 0" class="related-posts-section">
+            <div class="container">
+                <h3 class="section-title">Related Posts</h3>
+                <div class="related-posts-grid">
+                    <article *ngFor="let relatedPost of relatedPosts; trackBy: trackByFn" class="related-post"
+                        [routerLink]="['/blog', relatedPost.slug]">
+                        <div class="related-post-image">
+                            <img [src]="getFeaturedImage(relatedPost)" [alt]="getFeaturedImageAlt(relatedPost)"
+                                loading="lazy">
+                        </div>
+                        <div class="related-post-content">
+                            <div class="related-post-meta">
+                                <span class="related-post-category" *ngIf="relatedPost.category">{{ relatedPost.category
+                                    }}</span>
+                                <span class="related-post-date">{{ formatDate(relatedPost.published_at ||
+                                    relatedPost.created_at) }}</span>
+                            </div>
+                            <h4 class="related-post-title">{{ relatedPost.title }}</h4>
+                            <p class="related-post-excerpt">{{ relatedPost.excerpt }}</p>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </section>
+    </article>
+
+    <!-- Image Gallery Modal -->
+    <div *ngIf="showImageGallery && post" class="image-gallery-modal" (click)="closeImageGallery()">
+        <div class="gallery-container" (click)="$event.stopPropagation()">
+            <button class="gallery-close" (click)="closeImageGallery()" title="Close gallery">
+                ✕
+            </button>
+
+            <div class="gallery-content">
+                <button *ngIf="getPostImages(post).length > 1" class="gallery-nav gallery-prev"
+                    (click)="previousImage()" title="Previous image">
+                    ←
+                </button>
+
+                <div class="gallery-image-container">
+                    <img [src]="getPostImages(post)[selectedImageIndex]?.image_url"
+                        [alt]="getPostImages(post)[selectedImageIndex]?.alt_text || post.title"
+                        class="gallery-main-image">
+                </div>
+
+                <button *ngIf="getPostImages(post).length > 1" class="gallery-nav gallery-next" (click)="nextImage()"
+                    title="Next image">
+                    →
+                </button>
+            </div>
+
+            <div class="gallery-info" *ngIf="getPostImages(post)[selectedImageIndex]?.alt">
+                <p class="gallery-caption">{{ getPostImages(post)[selectedImageIndex].alt }}</p>
+            </div>
+
+            <div *ngIf="getPostImages(post).length > 1" class="gallery-indicators">
+                <button *ngFor="let image of getPostImages(post); let i = index" class="gallery-indicator"
+                    [class.active]="i === selectedImageIndex" (click)="selectedImageIndex = i">
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Newsletter CTA -->
+    <!--
+    <section class="newsletter-cta">
+        <div class="container">
+            <div class="newsletter-content">
+                <h3 class="newsletter-title">Don't Miss Our Latest Designs</h3>
+                <p class="newsletter-text">Subscribe to get the newest home plans and architectural insights delivered
+                    to your inbox.</p>
+                <div class="newsletter-form">
+                    <input type="email" placeholder="Enter your email" class="newsletter-input">
+                    <button class="newsletter-btn">Subscribe</button>
+                </div>
+            </div>
+        </div>
+    </section> -->
+</div>

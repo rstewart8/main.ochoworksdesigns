@@ -1,0 +1,704 @@
+<div class="contact-edit-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="header-title-section">
+        <a routerLink="/admin/marketing/contacts" class="back-link">← Back to Contacts</a>
+        <h1 class="page-title">{{ isEditMode ? 'Edit Contact' : 'Add Contact' }}</h1>
+        <p class="page-subtitle" *ngIf="isEditMode && contact.email">{{ contact.email }}</p>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Messages -->
+  <div class="message success-message" *ngIf="successMessage">
+    <span>✓</span> {{ successMessage }}
+  </div>
+  
+  <div class="message error-message" *ngIf="error">
+    <span>✕</span> {{ error }}
+    <button class="message-close" (click)="error = null">×</button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="loading-spinner"></div>
+    <p>Loading contact...</p>
+  </div>
+
+  <!-- Main Content -->
+  <div *ngIf="!loading" class="content-grid">
+    
+    <!-- Left Column: Contact Form -->
+    <div class="form-section">
+      <div class="card">
+        <div class="card-header">
+          <h2>Contact Information</h2>
+        </div>
+        <div class="card-body">
+          <form (ngSubmit)="saveContact()">
+            <!-- Company -->
+            <div class="form-group">
+              <label for="company">Company</label>
+              <input type="text" id="company" [(ngModel)]="contact.company" name="company" class="form-input" placeholder="Company name">
+            </div>
+
+            <!-- Phone -->
+            <div class="form-group">
+              <label for="phone">Phone</label>
+              <input type="tel" id="phone" [(ngModel)]="contact.phone" (input)="formatPhoneInput()"name="phone" class="form-input" placeholder="(555) 123-4567">
+              <span class="form-hint">Any format accepted. Must be 10 digits.</span>
+            </div>
+
+            <!-- Email -->
+            <div class="form-group">
+              <label for="email">Email Address</label>
+              <input type="email" id="email" [(ngModel)]="contact.email" name="email" class="form-input" placeholder="email@example.com">
+            </div>
+
+            <!-- Firstname -->
+            <div class="form-group">
+              <label for="firstname">Firstname</label>
+              <input type="text" id="firstname" [(ngModel)]="contact.firstname" name="firstname" class="form-input" placeholder="First name">
+            </div>
+
+            <!-- Lastname -->
+            <div class="form-group">
+              <label for="lastname">Lastname</label>
+              <input type="text" id="lastname" [(ngModel)]="contact.lastname" name="lastname" class="form-input" placeholder="Last name">
+            </div>
+
+            <!-- City -->
+            <div class="form-group">
+              <label for="city">City</label>
+              <input type="text" id="city" [(ngModel)]="contact.city" name="city" class="form-input" placeholder="City">
+            </div>
+
+            <!-- State -->
+            <div class="form-group">
+              <label for="state">State</label>
+              <input type="text" id="state" [(ngModel)]="contact.state" name="state" class="form-input" placeholder="State">
+            </div>
+
+
+            <!-- Website -->
+            <div class="form-group">
+              <label for="website">Website</label>
+              <input type="text" id="website" [(ngModel)]="contact.website" name="website" class="form-input" placeholder="Website URL">
+            </div>
+
+            <!-- Source -->
+            <div class="form-group">
+              <label for="source">Source</label>
+              <select id="source" [(ngModel)]="contact.source" name="source" class="form-select">
+                <option *ngFor="let src of sourceOptions" [value]="src">{{ src }}</option>
+              </select>
+            </div>
+
+            <!-- Last Contacted (read-only, edit mode only) -->
+            <div class="form-group" *ngIf="isEditMode && contact.last_contacted_at">
+              <label>Last Contacted</label>
+              <input type="text" [value]="formatDateTime(contact.last_contacted_at)" class="form-input" disabled readonly>
+            </div>
+
+            <!-- Tags -->
+            <div class="form-group">
+              <label>Tags</label>
+              <div class="tags-input-container">
+                <div class="tags-list" *ngIf="contact.tags && contact.tags.length > 0">
+                  <span *ngFor="let tag of contact.tags" class="tag">
+                    {{ tag }}
+                    <button type="button" class="tag-remove" (click)="removeTag(tag)">×</button>
+                  </span>
+                </div>
+                <div class="tags-input-row">
+                  <input type="text" [(ngModel)]="newTag" name="newTag" class="form-input" placeholder="Add a tag..." (keydown)="onTagKeydown($event)">
+                  <button type="button" class="btn btn-small btn-secondary" (click)="addTag()">Add</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Subscription Status -->
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input type="checkbox" [(ngModel)]="contact.is_subscribed" name="is_subscribed" class="checkbox">
+                <span class="checkbox-text">Subscribed to emails</span>
+              </label>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="form-actions">
+              <button type="button" class="btn btn-secondary" (click)="goBack()">Cancel</button>
+              <button type="submit" class="btn btn-primary" [disabled]="saving || checkingDuplicates">
+                {{ checkingDuplicates ? 'Checking...' : (saving ? 'Saving...' : (isEditMode ? 'Update Contact' : 'Create Contact')) }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Contact Stats (Edit mode only) -->
+      <div class="card stats-card" *ngIf="isEditMode">
+        <div class="card-header">
+          <h2>Statistics</h2>
+        </div>
+        <div class="card-body">
+          <div class="stats-grid">
+            <div class="stat-item">
+              <span class="stat-value">{{ contact.total_emails || 0 }}</span>
+              <span class="stat-label">Emails Sent</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">{{ contact.total_calls || 0 }}</span>
+              <span class="stat-label">Calls</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">{{ contact.total_notes || 0 }}</span>
+              <span class="stat-label">Notes</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Notes & Calls (Edit mode only) -->
+    <div class="activity-section" *ngIf="isEditMode">
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab" [class.active]="activeTab === 'notes'" (click)="setActiveTab('notes')">
+          📝 Notes <span class="tab-count">({{ totalNotes }})</span>
+        </button>
+        <button class="tab" [class.active]="activeTab === 'calls'" (click)="setActiveTab('calls')">
+          📞 Calls <span class="tab-count">({{ totalCalls }})</span>
+        </button>
+        <button class="tab" [class.active]="activeTab === 'campaign'" (click)="setActiveTab('campaign')">
+          📧 Campaign <span class="tab-count">({{ emailSends.length }})</span>
+        </button>
+      </div>
+
+      <!-- Notes Tab -->
+      <div class="tab-content" *ngIf="activeTab === 'notes'">
+        <div class="card">
+          <div class="card-header">
+            <h2>Notes</h2>
+            <button class="btn btn-primary btn-small" (click)="openNoteForm()">+ Add Note</button>
+          </div>
+          <div class="card-body">
+            
+            <!-- New Note Form -->
+            <div class="note-form" *ngIf="showNoteForm">
+              <h3>Add New Note</h3>
+              
+              <div class="form-group">
+                <label for="note_type">Type</label>
+                <select id="note_type" [(ngModel)]="newNote.note_type" name="note_type" class="form-select">
+                  <option *ngFor="let opt of noteTypeOptions" [value]="opt.value">{{ opt.icon }} {{ opt.label }}</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="note_content">Note</label>
+                <textarea id="note_content" [(ngModel)]="newNote.content" name="note_content" class="form-textarea" rows="4" placeholder="Enter your note..."></textarea>
+              </div>
+
+              <div class="form-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" [(ngModel)]="newNote.is_pinned" name="is_pinned" class="checkbox">
+                  <span class="checkbox-text">📌 Pin this note</span>
+                </label>
+              </div>
+
+              <div class="form-actions">
+                <button type="button" class="btn btn-secondary" (click)="cancelNoteForm()">Cancel</button>
+                <button type="button" class="btn btn-primary" (click)="saveNewNote()" [disabled]="savingNote">
+                  {{ savingNote ? 'Saving...' : 'Save Note' }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Notes List -->
+            <div class="notes-list" *ngIf="!showNoteForm">
+              
+              <div *ngIf="loadingNotes" class="loading-small">
+                <div class="loading-spinner-small"></div>
+                Loading notes...
+              </div>
+
+              <div *ngIf="!loadingNotes && notes.length === 0" class="empty-state">
+                <p>No notes yet.</p>
+                <button class="btn btn-primary btn-small" (click)="openNoteForm()">Add First Note</button>
+              </div>
+
+              <div *ngFor="let note of notes; trackBy: trackByNoteFn" class="note-item" [class.pinned]="note.is_pinned" [class.editing]="editingNoteId === note.id">
+                
+                <!-- View Mode -->
+                <div *ngIf="editingNoteId !== note.id" class="note-view">
+                  <div class="note-header">
+                    <span class="note-type-icon">{{ getNoteTypeIcon(note.note_type) }}</span>
+                    <span class="note-type">{{ getNoteTypeLabel(note.note_type) }}</span>
+                    <span class="note-datetime">{{ formatDateTime(note.created_at) }}</span>
+                    <span *ngIf="note.is_pinned" class="pin-badge">📌 Pinned</span>
+                  </div>
+                  
+                  <div class="note-content">{{ note.content }}</div>
+                  
+                  <div *ngIf="note.updated_at && note.updated_at !== note.created_at" class="note-edited">
+                    Edited {{ formatDateTime(note.updated_at) }}
+                  </div>
+                  
+                  <div class="note-actions">
+                    <button class="btn-icon" (click)="toggleNotePin(note)" [title]="note.is_pinned ? 'Unpin' : 'Pin'">
+                      {{ note.is_pinned ? '📌' : '📍' }}
+                    </button>
+                    <button class="btn-icon" (click)="startEditNote(note)" title="Edit">✏️</button>
+                    <button class="btn-icon delete" (click)="confirmDeleteNote(note)" title="Delete">🗑️</button>
+                  </div>
+                </div>
+
+                <!-- Edit Mode -->
+                <div *ngIf="editingNoteId === note.id" class="note-edit">
+                  <div class="form-group">
+                    <label>Type</label>
+                    <select [(ngModel)]="editingNote.note_type" name="edit_note_type" class="form-select">
+                      <option *ngFor="let opt of noteTypeOptions" [value]="opt.value">{{ opt.icon }} {{ opt.label }}</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label>Note</label>
+                    <textarea [(ngModel)]="editingNote.content" name="edit_note_content" class="form-textarea" rows="4"></textarea>
+                  </div>
+
+                  <div class="form-actions">
+                    <button type="button" class="btn btn-secondary btn-small" (click)="cancelEditNote()">Cancel</button>
+                    <button type="button" class="btn btn-primary btn-small" (click)="saveEditNote()" [disabled]="savingNote">
+                      {{ savingNote ? 'Saving...' : 'Save' }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div *ngIf="hasMoreNotes()" class="load-more">
+                <button class="btn btn-secondary" (click)="loadMoreNotes()" [disabled]="loadingNotes">
+                  {{ loadingNotes ? 'Loading...' : 'Load More' }}
+                </button>
+                <span class="count-info">Showing {{ notes.length }} of {{ totalNotes }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Calls Tab -->
+      <div class="tab-content" *ngIf="activeTab === 'calls'">
+        <div class="card">
+          <div class="card-header">
+            <h2>Call History</h2>
+            <button class="btn btn-primary btn-small" (click)="openCallForm()">+ Log Call</button>
+          </div>
+          <div class="card-body">
+            
+            <!-- New Call Form -->
+            <div class="call-form" *ngIf="showCallForm">
+              <h3>Log New Call</h3>
+              
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Direction</label>
+                  <div class="radio-group">
+                    <label class="radio-label">
+                      <input type="radio" [(ngModel)]="newCall.direction" name="new_direction" value="outbound">
+                      <span>📤 Outbound</span>
+                    </label>
+                    <label class="radio-label">
+                      <input type="radio" [(ngModel)]="newCall.direction" name="new_direction" value="inbound">
+                      <span>📥 Inbound</span>
+                    </label>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="new_outcome">Outcome</label>
+                  <select id="new_outcome" [(ngModel)]="newCall.outcome" name="new_outcome" class="form-select">
+                    <option *ngFor="let opt of outcomeOptions" [value]="opt.value">{{ opt.label }}</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="new_phone">Phone Number</label>
+                  <input type="tel" id="new_phone" [(ngModel)]="newCall.phone_number" (input)="formatNewCallPhoneInput()" name="new_phone" class="form-input" placeholder="(555) 123-4567">
+                </div>
+                <div class="form-group">
+                  <label for="new_duration">Duration (minutes)</label>
+                  <input type="number" id="new_duration" [(ngModel)]="newCall.duration_seconds" name="new_duration" class="form-input" placeholder="e.g. 5" min="0">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="new_called_at">Date & Time</label>
+                <input type="datetime-local" id="new_called_at" [(ngModel)]="newCall.called_at" name="new_called_at" class="form-input">
+              </div>
+
+              <div class="form-group">
+                <label for="new_call_notes">Notes</label>
+                <textarea id="new_call_notes" [(ngModel)]="newCall.notes" name="new_call_notes" class="form-textarea" rows="3" placeholder="What was discussed..."></textarea>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="new_follow_up_date">Follow-up Date</label>
+                  <input type="date" id="new_follow_up_date" [(ngModel)]="newCall.follow_up_date" name="new_follow_up_date" class="form-input">
+                </div>
+                <div class="form-group">
+                  <label for="new_follow_up_notes">Follow-up Notes</label>
+                  <input type="text" id="new_follow_up_notes" [(ngModel)]="newCall.follow_up_notes" name="new_follow_up_notes" class="form-input" placeholder="e.g. Send proposal">
+                </div>
+              </div>
+
+              <div class="form-group" *ngIf="newCall.follow_up_date">
+                <label class="checkbox-label">
+                  <input 
+                    type="checkbox" 
+                    [checked]="newCall.follow_up_complete === 1"
+                    (change)="newCall.follow_up_complete = $any($event.target).checked ? 1 : 0"
+                    name="new_follow_up_complete" 
+                    class="checkbox">
+                  <span class="checkbox-text">Mark follow-up as complete</span>
+                </label>
+              </div>
+
+              <div class="form-actions">
+                <button type="button" class="btn btn-secondary" (click)="cancelCallForm()">Cancel</button>
+                <button type="button" class="btn btn-primary" (click)="saveNewCall()" [disabled]="savingCall">
+                  {{ savingCall ? 'Saving...' : 'Save Call' }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Calls List -->
+            <div class="calls-list" *ngIf="!showCallForm">
+              
+              <div *ngIf="loadingCalls" class="loading-small">
+                <div class="loading-spinner-small"></div>
+                Loading calls...
+              </div>
+
+              <div *ngIf="!loadingCalls && calls.length === 0" class="empty-state">
+                <p>No calls logged yet.</p>
+                <button class="btn btn-primary btn-small" (click)="openCallForm()">Log First Call</button>
+              </div>
+
+              <div *ngFor="let call of calls; trackBy: trackByCallFn" class="call-item" [class.editing]="editingCallId === call.id">
+                
+                <!-- View Mode -->
+                <div *ngIf="editingCallId !== call.id" class="call-view">
+                  <div class="call-header">
+                    <span class="call-direction">{{ getDirectionIcon(call.direction) }}</span>
+                    <span class="call-datetime">{{ formatDateTime(call.called_at) }}</span>
+                    <span class="call-outcome" [ngClass]="getOutcomeClass(call.outcome)">
+                      {{ getOutcomeLabel(call.outcome) }}
+                    </span>
+                  </div>
+                  
+                  <div class="call-details">
+                    <span *ngIf="call.phone_number" class="call-phone">📞 {{ formatPhoneNumber(call.phone_number) }}</span>
+                    <span *ngIf="call.duration_seconds" class="call-duration">⏱️ {{ formatDuration(call.duration_seconds) }}</span>
+                  </div>
+                  
+                  <div *ngIf="call.notes" class="call-notes">{{ call.notes }}</div>
+                  
+                  <div *ngIf="call.follow_up_date" class="call-follow-up" [class.completed]="call.follow_up_complete === 1">
+                    <div class="follow-up-header">
+                      <strong>📅 Follow-up:</strong> {{ call.follow_up_date | date }}
+                      <span *ngIf="call.follow_up_notes" class="follow-up-notes-text">— {{ call.follow_up_notes }}</span>
+                    </div>
+                    <label class="checkbox-label follow-up-complete-checkbox">
+                      <input 
+                        type="checkbox" 
+                        [checked]="call.follow_up_complete === 1" 
+                        (change)="toggleFollowUpComplete(call)"
+                        class="checkbox">
+                      <span class="checkbox-text">{{ call.follow_up_complete === 1 ? 'Completed' : 'Mark as complete' }}</span>
+                    </label>
+                  </div>
+                  
+                  <div class="call-actions">
+                    <button class="btn-icon" (click)="startEditCall(call)" title="Edit">✏️</button>
+                    <button class="btn-icon delete" (click)="confirmDeleteCall(call)" title="Delete">🗑️</button>
+                  </div>
+                </div>
+
+                <!-- Edit Mode -->
+                <div *ngIf="editingCallId === call.id" class="call-edit">
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label>Direction</label>
+                      <select [(ngModel)]="editingCall.direction" name="edit_direction" class="form-select">
+                        <option value="outbound">📤 Outbound</option>
+                        <option value="inbound">📥 Inbound</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label>Outcome</label>
+                      <select [(ngModel)]="editingCall.outcome" name="edit_outcome" class="form-select">
+                        <option *ngFor="let opt of outcomeOptions" [value]="opt.value">{{ opt.label }}</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label>Notes</label>
+                    <textarea [(ngModel)]="editingCall.notes" name="edit_call_notes" class="form-textarea" rows="3"></textarea>
+                  </div>
+
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label>Follow-up Date</label>
+                      <input type="date" [(ngModel)]="editingCall.follow_up_date" name="edit_follow_up_date" class="form-input">
+                    </div>
+                    <div class="form-group">
+                      <label>Follow-up Notes</label>
+                      <input type="text" [(ngModel)]="editingCall.follow_up_notes" name="edit_follow_up_notes" class="form-input">
+                    </div>
+                  </div>
+
+                  <div class="form-group" *ngIf="editingCall.follow_up_date">
+                    <label class="checkbox-label">
+                      <input 
+                        type="checkbox" 
+                        [checked]="editingCall.follow_up_complete === 1"
+                        (change)="editingCall.follow_up_complete = $any($event.target).checked ? 1 : 0"
+                        name="edit_follow_up_complete" 
+                        class="checkbox">
+                      <span class="checkbox-text">Mark follow-up as complete</span>
+                    </label>
+                  </div>
+
+                  <div class="form-actions">
+                    <button type="button" class="btn btn-secondary btn-small" (click)="cancelEditCall()">Cancel</button>
+                    <button type="button" class="btn btn-primary btn-small" (click)="saveEditCall()" [disabled]="savingCall">
+                      {{ savingCall ? 'Saving...' : 'Save' }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div *ngIf="hasMoreCalls()" class="load-more">
+                <button class="btn btn-secondary" (click)="loadMoreCalls()" [disabled]="loadingCalls">
+                  {{ loadingCalls ? 'Loading...' : 'Load More' }}
+                </button>
+                <span class="count-info">Showing {{ calls.length }} of {{ totalCalls }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Campaign Tab -->
+      <div class="tab-content" *ngIf="activeTab === 'campaign'">
+        <div class="card">
+          <div class="card-header">
+            <h2>Campaign Email Sends</h2>
+          </div>
+          <div class="card-body">
+            <div class="calls-list">
+              <div class="call-form">
+                <h3>Create Manual Email Send</h3>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="manual_send_campaign">Campaign</label>
+                    <select
+                      id="manual_send_campaign"
+                      [(ngModel)]="selectedCampaignId"
+                      name="manual_send_campaign"
+                      class="form-select"
+                      [disabled]="loadingCampaignOptions || creatingEmailSend"
+                      (change)="onCampaignSelectionChange()"
+                    >
+                      <option [ngValue]="null">Select campaign...</option>
+                      <option *ngFor="let campaign of availableCampaigns" [ngValue]="campaign.id">
+                        {{ campaign.name }} (#{{ campaign.id }})
+                      </option>
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="manual_send_email_campaign">Email Campaign</label>
+                    <select
+                      id="manual_send_email_campaign"
+                      [(ngModel)]="selectedEmailCampaignId"
+                      name="manual_send_email_campaign"
+                      class="form-select"
+                      [disabled]="!selectedCampaignId || loadingEmailCampaignOptions || creatingEmailSend"
+                    >
+                      <option [ngValue]="null">Select email campaign...</option>
+                      <option
+                        *ngFor="let emailCampaign of availableEmailCampaigns"
+                        [ngValue]="emailCampaign.id"
+                        [disabled]="isEmailCampaignAlreadySent(emailCampaign.id)"
+                      >
+                        {{ emailCampaign.name }} (#{{ emailCampaign.id }}){{ isEmailCampaignAlreadySent(emailCampaign.id) ? ' - already sent' : '' }}
+                      </option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-actions">
+                  <button
+                    type="button"
+                    class="btn btn-primary btn-small"
+                    [disabled]="!selectedEmailCampaignId || creatingEmailSend"
+                    (click)="createManualEmailSendRecord()"
+                  >
+                    {{ creatingEmailSend ? 'Creating...' : 'Create Email Send Record' }}
+                  </button>
+                </div>
+              </div>
+
+              <div *ngIf="loadingEmailSends" class="loading-small">
+                <div class="loading-spinner-small"></div>
+                Loading campaigns...
+              </div>
+
+              <div *ngIf="!loadingEmailSends && emailSends.length === 0" class="empty-state">
+                <p>No campaign emails sent to this contact yet.</p>
+              </div>
+
+              <div *ngFor="let send of emailSends; trackBy: trackByEmailSendFn" class="call-item">
+                <div class="call-view">
+                  <div class="call-header">
+                    <span class="call-direction">📧</span>
+                    <span class="call-datetime">{{ send.sent_at ? formatDateTime(send.sent_at) : formatDateTime(send.created_at) }}</span>
+                    <span class="call-outcome">{{ (send.status || 'unknown') | titlecase }}</span>
+                  </div>
+
+                  <div class="call-details">
+                    <span class="call-phone">
+                      Campaign:
+                      <a *ngIf="send.campaign_id" [routerLink]="['/admin/marketing/campaigns', send.campaign_id]">
+                        {{ send.campaign_name || ('#' + send.campaign_id) }}
+                      </a>
+                      <span *ngIf="!send.campaign_id">{{ send.campaign_name || '—' }}</span>
+                    </span>
+                  </div>
+                  <div class="call-details">
+                    <span class="call-phone">
+                      Email Campaign:
+                      <a
+                        *ngIf="send.campaign_id && send.email_campaign_id"
+                        [routerLink]="['/admin/marketing/campaigns', send.campaign_id, 'email-campaigns', send.email_campaign_id]"
+                      >
+                        {{ send.email_campaign_name || ('#' + send.email_campaign_id) }}
+                      </a>
+                      <span *ngIf="!send.campaign_id || !send.email_campaign_id">{{ send.email_campaign_name || '—' }}</span>
+                    </span>
+                  </div>
+                  <div class="call-details">
+                    <span class="call-duration" *ngIf="send.opened_at">Opened: {{ formatDateTime(send.opened_at) }} ({{ send.open_count || 0 }})</span>
+                    <span class="call-duration" *ngIf="!send.opened_at">Opened: —</span>
+                  </div>
+                  <div class="call-details">
+                    <span class="call-duration" *ngIf="send.clicked_at">Clicked: {{ formatDateTime(send.clicked_at) }} ({{ send.click_count || 0 }})</span>
+                    <span class="call-duration" *ngIf="!send.clicked_at">Clicked: —</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- <pre>contact: {{ contact | json }}</pre> -->
+</div>
+
+<!-- Delete Note Modal -->
+<div class="modal-overlay" *ngIf="showDeleteNoteModal" (click)="cancelDeleteNote()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Delete Note</h3>
+      <button class="modal-close" (click)="cancelDeleteNote()">×</button>
+    </div>
+    <div class="modal-body">
+      <p>Are you sure you want to delete this note?</p>
+      <div class="item-to-delete" *ngIf="noteToDelete">
+        <p><strong>{{ getNoteTypeIcon(noteToDelete.note_type) }} {{ getNoteTypeLabel(noteToDelete.note_type) }}</strong> — {{ formatDateTime(noteToDelete.created_at) }}</p>
+        <p class="content-preview">{{ noteToDelete.content }}</p>
+      </div>
+      <p class="warning-text">This action cannot be undone.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="cancelDeleteNote()" [disabled]="deletingNote">Cancel</button>
+      <button class="btn btn-danger" (click)="deleteNote()" [disabled]="deletingNote">
+        {{ deletingNote ? 'Deleting...' : 'Delete' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Call Modal -->
+<div class="modal-overlay" *ngIf="showDeleteCallModal" (click)="cancelDeleteCall()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Delete Call</h3>
+      <button class="modal-close" (click)="cancelDeleteCall()">×</button>
+    </div>
+    <div class="modal-body">
+      <p>Are you sure you want to delete this call record?</p>
+      <div class="item-to-delete" *ngIf="callToDelete">
+        <p><strong>{{ getDirectionIcon(callToDelete.direction) }} {{ callToDelete.direction | titlecase }}</strong> — {{ formatDateTime(callToDelete.called_at) }}</p>
+        <p *ngIf="callToDelete.notes" class="content-preview">{{ callToDelete.notes }}</p>
+      </div>
+      <p class="warning-text">This action cannot be undone.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="cancelDeleteCall()" [disabled]="deletingCall">Cancel</button>
+      <button class="btn btn-danger" (click)="deleteCall()" [disabled]="deletingCall">
+        {{ deletingCall ? 'Deleting...' : 'Delete' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Duplicate Contact Modal -->
+<div class="modal-overlay" *ngIf="showDuplicateModal" (click)="closeDuplicateModal()">
+  <div class="modal duplicate-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>⚠️ Duplicate Contact Found</h3>
+      <button class="modal-close" (click)="closeDuplicateModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <p>A contact with the same {{ (firstDuplicate?.email === contact.email && firstDuplicate?.phone === contact.phone) ? 'email and phone' : (firstDuplicate?.email === contact.email ? 'email' : 'phone') }} already exists:</p>
+      
+      <div class="duplicate-contacts-list">
+        <div class="duplicate-contact-item" *ngFor="let dup of duplicateContacts">
+          <div class="duplicate-contact-info">
+            <div class="duplicate-contact-main">
+              <strong>{{ dup.firstname || 'Unnamed Contact' }}</strong>
+              <span class="duplicate-contact-company" *ngIf="dup.company">({{ dup.company }})</span>
+            </div>
+            <div class="duplicate-contact-details">
+              <span *ngIf="dup.email">📧 {{ dup.email }}</span>
+              <span *ngIf="dup.phone">📞 {{ formatPhoneNumber(dup.phone) }}</span>
+            </div>
+            <div class="duplicate-contact-meta">
+              <span *ngIf="dup.is_subscribed" class="subscribed-badge">✓ Subscribed</span>
+              <span *ngIf="!dup.is_subscribed" class="unsubscribed-badge">✕ Unsubscribed</span>
+              <span class="contact-id">ID: {{ dup.id }}</span>
+            </div>
+          </div>
+          <button class="btn btn-secondary btn-small" (click)="viewDuplicateContact(dup.id)">
+            View Contact
+          </button>
+        </div>
+      </div>
+      
+      <p class="warning-text">You cannot save this contact because it would create a duplicate. Please update the existing contact instead or use a different email/phone number.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" (click)="closeDuplicateModal()">Close</button>
+    </div>
+  </div>
+</div>

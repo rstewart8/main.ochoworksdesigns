@@ -6,6 +6,8 @@ var/
 api.ochoworksdesigns/.env
 api.ochoworksdesigns/.cron-env
 api.ochoworksdesigns/logs/
+api.ochoworksdesigns/files/
+api.ochoworksdesigns/sqls/dumps/
 
 web.ochoworksdesigns/.angular/
 web.ochoworksdesigns/dist/

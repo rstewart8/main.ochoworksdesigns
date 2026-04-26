@@ -1,0 +1,185 @@
+<div class="plan-container">
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="loading-spinner"></div>
+    <p>Loading plan details...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="error-container">
+    <div class="error-message">
+      <h3>Oops! Something went wrong</h3>
+      <p>{{ error }}</p>
+      <div class="error-actions">
+        <button class="back-button" (click)="goBack()">Back to Plans</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Plan Content -->
+  <div *ngIf="!loading && !error && plan" class="plan-content">
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb">
+      <a [routerLink]="['/plans']" class="breadcrumb-link">Featured Plans</a>
+      <span class="breadcrumb-separator">›</span>
+      <span class="breadcrumb-current">{{ plan.title }}</span>
+    </nav>
+
+    <!-- Plan Header -->
+    <div class="plan-header">
+      <div class="plan-header-content">
+        <div class="plan-title-section">
+          <h1 class="plan-title">{{ plan.title }}</h1>
+          <div class="plan-meta">
+            <span class="plan-no">{{ plan.plan_no }}</span>
+          </div>
+        </div>
+        <div class="plan-actions-header">
+          <button *ngIf="isAdmin()" class="action-btn secondary" [routerLink]="['/plan-set', plan.id]" title="Edit this plan">
+            <span class="action-icon">✏️</span>
+            Edit
+          </button>
+          <button class="action-btn secondary" (click)="sharePlan()" title="Share this plan">
+            <span class="action-icon">📤</span>
+            Share
+          </button>
+          <button class="action-btn primary" [routerLink]="['/contact']" [queryParams]="{plan: plan.plan_no}">
+            <span class="action-icon">💬</span>
+            Get Quote
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="plan-main">
+      <!-- Image Gallery Section -->
+      <div class="plan-gallery-section">
+        <div class="main-image-container">
+          <img [src]="getPrimaryImage()" [alt]="getImageAlt()" class="main-image" loading="lazy" (click)="openImageModal()">
+
+          <!-- Image overlay for enlarge button -->
+          <div class="image-overlay">
+            <button class="enlarge-btn" (click)="openImageModal()">
+              🔍 Enlarge
+            </button>
+          </div>
+
+          <!-- Image Navigation -->
+          <div class="image-nav" *ngIf="plan.images && plan.images.length > 1">
+            <button class="nav-btn prev-btn" (click)="previousImage()" [disabled]="selectedImageIndex === 0"
+              aria-label="Previous image">
+              ‹
+            </button>
+            <button class="nav-btn next-btn" (click)="nextImage()"
+              [disabled]="selectedImageIndex === plan.images.length - 1" aria-label="Next image">
+              ›
+            </button>
+          </div>
+
+          <!-- Image Counter -->
+          <div class="image-counter" *ngIf="plan.images && plan.images.length > 1">
+            {{ selectedImageIndex + 1 }} / {{ plan.images.length }}
+          </div>
+        </div>
+
+        <!-- Thumbnail Gallery -->
+        <div class="thumbnail-gallery" *ngIf="plan.images && plan.images.length > 1">
+          <button *ngFor="let image of plan.images; let i = index" class="thumbnail-btn"
+            [class.active]="i === selectedImageIndex" (click)="selectImage(i)"
+            [attr.aria-label]="'View image ' + (i + 1)">
+            <img [src]="image.image_url" [alt]="image.file_name" class="thumbnail-image" loading="lazy" (click)="openImageModal(image.image_url)">
+            <div class="thumbnail-overlay">
+              <span class="enlarge-icon">🔍</span>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Plan Details Section -->
+      <div class="plan-details-section">
+        <!-- Quick Specs -->
+        <div class="quick-specs-card">
+          <h2 class="section-title">Specifications</h2>
+          <div class="specs-grid">
+            <div *ngFor="let spec of getDetailedSpecs()" class="spec-item">
+              <span class="spec-label">{{ spec.label }}</span>
+              <span class="spec-value">{{ spec.value }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="description-card" *ngIf="plan.description">
+          <h2 class="section-title">Description</h2>
+          <div class="description-content">
+            <p>{{ plan.description }}</p>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="plan-actions-card">
+          <h2 class="section-title">Get Started</h2>
+          <div class="actions-grid">
+            <button class="action-btn primary large" [routerLink]="['/contact']" [queryParams]="{plan: plan.plan_no}">
+              <span class="action-icon">💬</span>
+              <div class="action-content">
+                <span class="action-title">Get Quote</span>
+                <span class="action-description">Contact us for pricing and customization options</span>
+              </div>
+            </button>
+            <button class="action-btn secondary large" (click)="sharePlan()">
+              <span class="action-icon">📤</span>
+              <div class="action-content">
+                <span class="action-title">Share Plan</span>
+                <span class="action-description">Share this plan with others</span>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Related Plans Section (Placeholder for future enhancement) -->
+    <div class="related-plans-section">
+      <h2 class="section-title">Explore More Plans</h2>
+      <div class="related-actions">
+        <button class="action-btn primary" [routerLink]="['/plans']">
+          Browse All Plans
+        </button>
+        <button class="action-btn secondary" [routerLink]="['/contact']">
+          Custom Design Request
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Image Modal -->
+  <div class="image-modal" [class.active]="showImageModal" (click)="closeImageModal($event)">
+    <div class="modal-content">
+      <button class="modal-close" (click)="closeImageModal()">&times;</button>
+      
+      <!-- Modal image with navigation -->
+      <div class="modal-image-container">
+        <img class="modal-image" [src]="selectedImageUrl" [alt]="getImageAlt()">
+        
+        <!-- Modal Navigation -->
+        <div class="modal-nav" *ngIf="plan && plan.images && plan.images.length > 1">
+          <button class="modal-nav-btn modal-prev-btn" (click)="previousModalImage()" 
+            [disabled]="selectedImageIndex === 0" aria-label="Previous image">
+            ‹
+          </button>
+          <button class="modal-nav-btn modal-next-btn" (click)="nextModalImage()"
+            [disabled]="selectedImageIndex === plan.images.length - 1" aria-label="Next image">
+            ›
+          </button>
+        </div>
+        
+        <!-- Modal Image Counter -->
+        <div class="modal-counter" *ngIf="plan && plan.images && plan.images.length > 1">
+          {{ selectedImageIndex + 1 }} / {{ plan.images.length }}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

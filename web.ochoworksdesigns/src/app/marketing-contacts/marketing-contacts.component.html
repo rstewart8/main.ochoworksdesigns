@@ -1,0 +1,338 @@
+<div class="contacts-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="header-title-section">
+        <a routerLink="/admin/marketing" class="back-link">← Dashboard</a>
+        <h1 class="page-title">Email Contacts</h1>
+        <p class="page-subtitle">Manage your email subscribers and contacts</p>
+      </div>
+      <div class="header-actions">
+        <a routerLink="/admin/marketing/contacts/import" class="btn btn-secondary">
+          <span class="btn-icon">↑</span>
+          Import
+        </a>
+        <a routerLink="/admin/marketing/contacts/new" class="btn btn-primary">
+          <span class="btn-icon">+</span>
+          Add Contact
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="filters-section">
+    <div class="filters-row">
+      <!-- Search -->
+      <div class="search-box">
+        <input type="text" [(ngModel)]="searchQuery" placeholder="Search by email, phone, name, or company..."
+          class="search-input" (keyup.enter)="onSearch()">
+        <button class="search-btn" (click)="onSearch()" title="Search">
+          🔍
+        </button>
+      </div>
+
+      <!-- Tag Filter -->
+      <select class="filter-select" [(ngModel)]="selectedTag" (change)="onTagChange()">
+        <option value="">All Tags</option>
+        <option *ngFor="let tag of availableTags" [value]="tag">{{ tag }}</option>
+      </select>
+
+      <!-- Source Filter -->
+      <select class="filter-select" [(ngModel)]="selectedSource" (change)="onSourceChange()">
+        <option value="">All Sources</option>
+        <option *ngFor="let source of availableSources" [value]="source">{{ source }}</option>
+      </select>
+
+      <!-- Subscribed Filter -->
+      <select class="filter-select" [(ngModel)]="selectedSubscribed" (change)="onSubscribedChange()">
+        <option value="">All Statuses</option>
+        <option value="true">Subscribed</option>
+        <option value="false">Unsubscribed</option>
+      </select>
+    </div>
+
+    <!-- Second row for City and State filters -->
+    <div class="filters-row filters-row-secondary">
+      <!-- City Multi-Select Filter -->
+      <div class="multi-select-container city-filter-container">
+        <button type="button" class="multi-select-trigger" [class.has-selection]="selectedCities.length > 0"
+          (click)="toggleCityDropdown()">
+          <span class="multi-select-text">{{ getCityDisplayText() }}</span>
+          <span class="multi-select-arrow" [class.open]="cityDropdownOpen">▼</span>
+        </button>
+
+        <div class="multi-select-dropdown" *ngIf="cityDropdownOpen">
+          <div class="dropdown-search">
+            <input type="text" [(ngModel)]="citySearchQuery" placeholder="Search cities..."
+              class="dropdown-search-input" (click)="$event.stopPropagation()">
+          </div>
+
+          <div class="dropdown-options">
+            <label *ngFor="let city of getFilteredCities(); trackBy: trackByCityFn" class="dropdown-option"
+              (click)="$event.stopPropagation()">
+              <input type="checkbox" [checked]="isCitySelected(city.city)" (change)="toggleCitySelection(city.city)">
+              <span class="option-label">{{ city.city }}</span>
+              <span class="option-count">({{ city.cnt }})</span>
+            </label>
+
+            <div *ngIf="getFilteredCities().length === 0" class="dropdown-no-results">
+              No cities found
+            </div>
+          </div>
+
+          <div class="dropdown-actions">
+            <button type="button" class="btn btn-text btn-small"
+              (click)="clearCitySelection(); $event.stopPropagation()">
+              Clear
+            </button>
+            <button type="button" class="btn btn-primary btn-small"
+              (click)="applyCityFilter(); $event.stopPropagation()">
+              Apply
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- State Multi-Select Filter -->
+      <div class="multi-select-container state-filter-container">
+        <button type="button" class="multi-select-trigger" [class.has-selection]="selectedStates.length > 0"
+          (click)="toggleStateDropdown()">
+          <span class="multi-select-text">{{ getStateDisplayText() }}</span>
+          <span class="multi-select-arrow" [class.open]="stateDropdownOpen">▼</span>
+        </button>
+
+        <div class="multi-select-dropdown" *ngIf="stateDropdownOpen">
+          <div class="dropdown-search">
+            <input type="text" [(ngModel)]="stateSearchQuery" placeholder="Search states..."
+              class="dropdown-search-input" (click)="$event.stopPropagation()">
+          </div>
+
+          <div class="dropdown-options">
+            <label *ngFor="let state of getFilteredStates(); trackBy: trackByStateFn" class="dropdown-option"
+              (click)="$event.stopPropagation()">
+              <input type="checkbox" [checked]="isStateSelected(state.state)"
+                (change)="toggleStateSelection(state.state)">
+              <span class="option-label">{{ state.state }}</span>
+              <span class="option-count">({{ state.cnt }})</span>
+            </label>
+
+            <div *ngIf="getFilteredStates().length === 0" class="dropdown-no-results">
+              No states found
+            </div>
+          </div>
+
+          <div class="dropdown-actions">
+            <button type="button" class="btn btn-text btn-small"
+              (click)="clearStateSelection(); $event.stopPropagation()">
+              Clear
+            </button>
+            <button type="button" class="btn btn-primary btn-small"
+              (click)="applyStateFilter(); $event.stopPropagation()">
+              Apply
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="filter-group last-contacted-group">
+        <label>Last Contacted</label>
+        <input type="date" class="form-input last-contacted-input" [(ngModel)]="lastContacted"
+          (change)="onLastContactedChange()">
+      </div>
+
+
+      <!-- Clear Filters -->
+      <button *ngIf="hasActiveFilters()" class="btn btn-text" (click)="clearFilters()">
+        Clear All Filters
+      </button>
+    </div>
+
+    <!-- Selected Filters Display -->
+    <div class="selected-filters" *ngIf="selectedCities.length > 0 || selectedStates.length > 0">
+      <span class="selected-filters-label">Active filters:</span>
+
+      <span *ngFor="let city of selectedCities" class="filter-chip">
+        {{ city }}
+        <button type="button" class="chip-remove" (click)="toggleCitySelection(city); applyCityFilter()">×</button>
+      </span>
+
+      <span *ngFor="let state of selectedStates" class="filter-chip filter-chip-state">
+        {{ state }}
+        <button type="button" class="chip-remove" (click)="toggleStateSelection(state); applyStateFilter()">×</button>
+      </span>
+    </div>
+
+    <!-- Results Info -->
+    <div class="results-info" *ngIf="!loading">
+      <p class="results-text">
+        Showing {{ contacts.length }} of {{ totalContacts }} contacts
+        <span *ngIf="hasActiveFilters()"> (filtered)</span>
+      </p>
+
+      <!-- Bulk Actions -->
+      <div class="bulk-actions" *ngIf="getSelectedCount() > 0">
+        <span class="selected-count">{{ getSelectedCount() }} selected</span>
+        <button class="btn btn-small btn-text" (click)="clearSelection()">Clear</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="loading-spinner"></div>
+    <p>Loading contacts...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="error-container">
+    <div class="error-message">
+      <h3>Oops! Something went wrong</h3>
+      <p>{{ error }}</p>
+      <button class="btn btn-primary" (click)="loadContacts()">Try Again</button>
+    </div>
+  </div>
+
+  <!-- No Results -->
+  <div *ngIf="!loading && !error && contacts.length === 0" class="no-results">
+    <div class="no-results-content">
+      <div class="no-results-icon">🔭</div>
+      <h3>No contacts found</h3>
+      <p *ngIf="hasActiveFilters()">
+        Try adjusting your filters or search criteria.
+      </p>
+      <p *ngIf="!hasActiveFilters()">
+        Start building your email list by adding contacts.
+      </p>
+      <div class="no-results-actions">
+        <button *ngIf="hasActiveFilters()" class="btn btn-secondary" (click)="clearFilters()">
+          Clear Filters
+        </button>
+        <a routerLink="/admin/marketing/contacts/new" class="btn btn-primary">
+          Add Your First Contact
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contacts Table -->
+  <div *ngIf="!loading && !error && contacts.length > 0" class="table-container">
+    <table class="contacts-table">
+      <thead>
+        <tr>
+          <th class="company-col">Company</th>
+          <th class="email-col">Email</th>
+          <th class="phone-col">Phone</th>
+          <th class="name-col">Name</th>
+          <th class="tags-col">Tags</th>
+          <th class="source-col">Source</th>
+          <th class="status-col">Status</th>
+          <th class="stats-col">Opens</th>
+          <th class="date-col">Added</th>
+          <th class="last-contacted-col">Last Contacted</th>
+          <th class="actions-col">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let contact of contacts; trackBy: trackByFn" [class.selected]="isSelected(contact.id)">
+          <!-- <td class="checkbox-col">
+            <input type="checkbox" [checked]="isSelected(contact.id)" (change)="toggleContactSelection(contact.id)"
+              class="checkbox">
+          </td> -->
+          <td class="company-col"><a [routerLink]="['/admin/marketing/contacts', contact.id]" class="email-link">{{ contact.company || '—' }}<br>{{ contact.city || '—' }}, {{ contact.state || '—' }}</a>
+          </td>
+          <td class="email-col">{{ contact.email }}</td>
+
+          <td class="phone-col">{{ contact.phone ? (contact.phone | phoneFormat) : '—' }}</td>
+          <td class="name-col">{{ contact.firstname }} {{ contact.lastname || '—' }}</td>
+          
+          <td class="tags-col">
+            <span class="tags-display" [title]="contact.tags?.join(', ')">
+              {{ getTagsDisplay(contact.tags) }}
+            </span>
+          </td>
+          <td class="source-col">
+            <span class="source-badge">{{ contact.source || 'manual' }}</span>
+          </td>
+          <td class="status-col">
+            <span class="status-badge" [class.subscribed]="contact.is_subscribed"
+              [class.unsubscribed]="!contact.is_subscribed">
+              {{ contact.is_subscribed ? 'Subscribed' : 'Unsubscribed' }}
+            </span>
+          </td>
+          <td class="stats-col">
+            <span class="open-rate">{{ getOpenRate(contact) }}</span>
+          </td>
+          <td class="date-col">{{ formatDate(contact.created_at) }}</td>
+          <td class="last-contacted-col">{{ contact.last_contacted_at ? formatDateTime(contact.last_contacted_at) : '—'
+            }}</td>
+          <td class="actions-col">
+            <div class="actions-menu">
+              <a [routerLink]="['/admin/marketing/contacts', contact.id]" class="action-btn" title="Edit">
+                ✏️
+              </a>
+              <button class="action-btn delete-btn" (click)="confirmDelete(contact)" title="Delete">
+                🗑️
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <nav *ngIf="!loading && !error && totalPages > 1" class="pagination" aria-label="Contacts pagination">
+    <div class="pagination-info">
+      <p>Page {{ currentPage }} of {{ totalPages }}</p>
+    </div>
+
+    <div class="pagination-controls">
+      <!-- Previous -->
+      <button class="pagination-btn" [disabled]="currentPage <= 1" (click)="goToPage(currentPage - 1)"
+        title="Previous page">
+        ← Previous
+      </button>
+
+      <!-- Page Numbers -->
+      <div class="pagination-numbers">
+        <button *ngFor="let page of getPaginationNumbers()" class="pagination-number"
+          [class.active]="page === currentPage" (click)="goToPage(page)">
+          {{ page }}
+        </button>
+      </div>
+
+      <!-- Next -->
+      <button class="pagination-btn" [disabled]="currentPage >= totalPages" (click)="goToPage(currentPage + 1)"
+        title="Next page">
+        Next →
+      </button>
+    </div>
+  </nav>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal-overlay" *ngIf="showDeleteModal" (click)="cancelDelete()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Delete Contact</h3>
+      <button class="modal-close" (click)="cancelDelete()">×</button>
+    </div>
+    <div class="modal-body">
+      <p>Are you sure you want to delete this contact?</p>
+      <p class="contact-to-delete" *ngIf="contactToDelete">
+        <strong>{{ contactToDelete.email }}</strong>
+        <span *ngIf="contactToDelete.company"> ({{ contactToDelete.company }})</span>
+      </p>
+      <p class="warning-text">This action cannot be undone.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="cancelDelete()" [disabled]="deleting">
+        Cancel
+      </button>
+      <button class="btn btn-danger" (click)="deleteContact()" [disabled]="deleting">
+        {{ deleting ? 'Deleting...' : 'Delete' }}
+      </button>
+    </div>
+  </div>
+</div>

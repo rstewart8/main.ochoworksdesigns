@@ -1,0 +1,130 @@
+<div class="contact-container">
+  <div class="contact-header">
+    <h1>Contact</h1>
+    <div class="header-line"></div>
+  </div>
+  
+  <div class="contact-info">
+    <div class="contact-method">
+      <div class="contact-icon phone-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
+        </svg>
+      </div>
+      <div class="contact-details">
+        <div class="contact-value">(435) 680-1097</div>
+        <div class="contact-label">Call or Send Me a Text</div>
+      </div>
+    </div>
+    
+    <div class="contact-method">
+      <div class="contact-icon email-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.89 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+        </svg>
+      </div>
+      <div class="contact-details">
+        <div class="contact-value">randy&#64;ochoworksdesigns.com</div>
+        <div class="contact-label">Send Me an Email</div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Success Message -->
+  <div *ngIf="submitSuccess" class="success-message">
+    <div class="success-box">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="success-icon">
+        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+      </svg>
+      <p>Thank you! Your message has been sent successfully. I'll get back to you soon!</p>
+    </div>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="submitError" class="error-message-global">
+    <div class="error-box">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="error-icon">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+      </svg>
+      <p>{{ submitError }}</p>
+    </div>
+  </div>
+  
+  <div class="contact-form-section" *ngIf="!submitSuccess">
+    <div class="form-content">
+      <div class="form-header">
+        <h2>Start Your New Home</h2>
+      </div>
+      
+      <form [formGroup]="contactForm" (ngSubmit)="onSubmit()" class="contact-form">
+        <div class="form-group">
+          <input 
+            type="text" 
+            id="name" 
+            formControlName="name" 
+            placeholder="Enter your name" 
+            [class.error]="isFieldInvalid('name')"
+            [disabled]="isSubmitting">
+          <div class="error-message" *ngIf="isFieldInvalid('name')">
+            {{ getFieldError('name') }}
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <input 
+            type="email" 
+            id="email" 
+            formControlName="email" 
+            placeholder="Enter email address"
+            [class.error]="isFieldInvalid('email')"
+            [disabled]="isSubmitting">
+          <div class="error-message" *ngIf="isFieldInvalid('email')">
+            {{ getFieldError('email') }}
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <textarea 
+            id="message" 
+            formControlName="message" 
+            placeholder="Enter your message" 
+            rows="6"
+            [class.error]="isFieldInvalid('message')"
+            [disabled]="isSubmitting"></textarea>
+          <div class="character-count">
+            {{ characterCount }} of {{ maxCharacters }} max characters.
+          </div>
+          <div class="error-message" *ngIf="isFieldInvalid('message')">
+            {{ getFieldError('message') }}
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <div class="recaptcha-container">
+            <re-captcha
+              [siteKey]="recaptchaSiteKey"
+              (resolved)="onRecaptchaResolved($event)"
+              (error)="onRecaptchaError()"
+              (expired)="onRecaptchaExpired()">
+            </re-captcha>
+          </div>
+          <div class="error-message" *ngIf="contactForm.invalid && !recaptchaResponse && contactForm.touched">
+            Please complete the reCAPTCHA verification
+          </div>
+        </div>
+        
+        <button 
+          type="submit" 
+          class="send-button"
+          [disabled]="contactForm.invalid || !recaptchaResponse || isSubmitting">
+          <span *ngIf="!isSubmitting">Send Message</span>
+          <span *ngIf="isSubmitting">Sending...</span>
+        </button>
+      </form>
+    </div>
+    
+    <div class="form-sidebar">
+      <p>Ready to get started designing your new home? Send me a message and we'll get started!</p>
+    </div>
+  </div>
+</div>

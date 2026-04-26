@@ -1,0 +1,500 @@
+/* Builders Component Styles */
+.builders-container {
+  padding-top: 0;
+  position: relative;
+  margin-top: -70px;
+  /* Add background image that extends under header */
+  background-image: url('/assets/images/plan-1.jpeg');
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  /* Ensure background extends full height of hero area */
+  min-height: 100vh;
+}
+
+/* Add overlay to make background faint */
+.builders-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.85);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Ensure all content appears above the overlay */
+.builders-container > * {
+  position: relative;
+  z-index: 2;
+}
+
+.hero-section {
+  text-align: center;
+  padding: 0.5rem 1rem 3rem 1rem;
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  border-radius: 15px;
+  margin: 1rem;
+  position: relative;
+  z-index: 2;
+  padding-top: 90px;
+}
+
+.hero-subheading {
+  margin: 0 0 2rem 0;
+  color: #444;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 1.25rem;
+  font-weight: 500;
+  line-height: 1.5;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+  text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.9);
+}
+
+.page-heading {
+  color: #2c5282;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 3rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  text-shadow: 2px 2px 6px rgba(255, 255, 255, 0.9);
+}
+
+.cta-section {
+  text-align: center;
+  padding: 2rem 1rem;
+  margin: 2rem 0;
+  position: relative;
+  z-index: 2;
+}
+
+.cta-button {
+  display: inline-block;
+  background-color: #81c7d4;
+  color: white;
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 30px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(129, 199, 212, 0.3);
+}
+
+.cta-button:hover {
+  background-color: #6bb6c5;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(129, 199, 212, 0.4);
+  color: white;
+}
+
+.content-section {
+  position: relative;
+  z-index: 2;
+  background: rgba(248, 249, 250, 0.95);
+  margin: 2rem auto;
+  padding: 2rem;
+  border-radius: 15px;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  max-width: 1200px;
+  width: calc(100% - 2rem);
+}
+
+.content-section p {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: #444;
+  margin-bottom: 1rem;
+}
+
+.service-section {
+  margin: 4rem 0;
+  text-align: left;
+}
+
+.section-heading {
+  color: #2c5282;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 2.2rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  text-align: center;
+  position: relative;
+}
+
+.section-heading::after {
+  content: '';
+  display: block;
+  width: 250px;
+  height: 3px;
+  background: #81c7d4;
+  margin: 1rem auto 2rem auto;
+}
+
+.service-content {
+  display: flex;
+  align-items: center;
+  gap: 3rem;
+  margin-top: 2rem;
+  max-width: 1000px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.service-content.reverse {
+  flex-direction: row-reverse;
+}
+
+.service-text {
+  flex: 1;
+  text-align: center;
+}
+
+.service-text p {
+  font-size: 1.2rem;
+  line-height: 1.7;
+  color: #555;
+  margin: 0 0 1.5rem 0;
+  text-align: center;
+  font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-weight: 400;
+}
+
+.service-image {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.plan-image {
+  max-width: 100%;
+  width: 400px;
+  height: auto;
+  border-radius: 8px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.plan-image:hover {
+  transform: translateY(-5px);
+}
+
+/* Services Grid Section */
+.services-grid-section {
+  margin: 4rem 0;
+}
+
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.service-card {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+.service-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+}
+
+.service-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  display: block;
+}
+
+.service-title {
+  color: #2c5282;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.service-description {
+  color: #666;
+  font-size: 1rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Benefits Section */
+.benefits-section {
+  margin: 4rem 0;
+}
+
+.benefits-list {
+  margin-top: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.benefit-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.benefit-item:hover {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  transform: translateX(5px);
+}
+
+.benefit-icon {
+  font-size: 1.5rem;
+  color: #81c7d4;
+  font-weight: bold;
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(129, 199, 212, 0.1);
+  border-radius: 50%;
+}
+
+.benefit-content h3 {
+  color: #2c5282;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem 0;
+}
+
+.benefit-content p {
+  color: #666;
+  font-size: 1rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Final CTA Section */
+.final-cta-section {
+  margin: 4rem 0 2rem 0;
+  text-align: center;
+  padding: 3rem 2rem;
+  background: linear-gradient(135deg, rgba(129, 199, 212, 0.1), rgba(44, 82, 130, 0.1));
+  border-radius: 15px;
+}
+
+.cta-heading {
+  color: #2c5282;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.cta-text {
+  color: #555;
+  font-size: 1.2rem;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.cta-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.cta-button.primary {
+  background-color: #2c5282;
+}
+
+.cta-button.primary:hover {
+  background-color: #1e3a5f;
+}
+
+.cta-button.secondary {
+  background-color: #81c7d4;
+}
+
+.cta-button.secondary:hover {
+  background-color: #6bb6c5;
+}
+
+/* Responsive Design */
+@media screen and (max-width: 768px) {
+  .builders-container {
+    margin-top: -80px;
+    background-attachment: scroll;
+    min-height: 100vh;
+  }
+
+  .builders-container::before {
+    background: rgba(255, 255, 255, 0.88);
+  }
+
+  .hero-section {
+    padding: 0.5rem 1rem 2rem 1rem;
+    padding-top: 100px;
+  }
+
+  .page-heading {
+    font-size: 2.5rem;
+  }
+
+  .hero-subheading {
+    font-size: 1.1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .cta-section {
+    padding: 1.5rem 1rem;
+    margin: 1.5rem 0;
+  }
+
+  .cta-button {
+    padding: 0.9rem 1.8rem;
+    font-size: 1rem;
+  }
+
+  .content-section {
+    margin: 1rem auto;
+    margin-top: 3rem;
+    padding: 1.5rem 1rem;
+    width: calc(100% - 2rem);
+  }
+
+  .service-content {
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .service-content.reverse {
+    flex-direction: column;
+  }
+
+  .section-heading {
+    font-size: 1.8rem;
+  }
+
+  .service-text {
+    text-align: center;
+  }
+
+  .plan-image {
+    width: 100%;
+    max-width: 350px;
+  }
+
+  .services-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .benefit-item {
+    flex-direction: column;
+    text-align: center;
+    align-items: center;
+  }
+
+  .cta-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .cta-button {
+    width: 100%;
+    max-width: 300px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .builders-container {
+    margin-top: -60px;
+    min-height: 100vh;
+  }
+
+  .builders-container::before {
+    background: rgba(255, 255, 255, 0.9);
+  }
+
+  .hero-section {
+    padding: 0.25rem 1rem 1.5rem 1rem;
+    padding-top: 80px;
+    margin: 0.5rem;
+  }
+
+  .page-heading {
+    font-size: 2rem;
+  }
+
+  .hero-subheading {
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .cta-section {
+    padding: 1rem;
+    margin: 1rem 0;
+  }
+
+  .cta-button {
+    padding: 0.8rem 1.5rem;
+    font-size: 0.95rem;
+  }
+
+  .content-section {
+    margin: 0.5rem auto;
+    margin-top: 2.5rem;
+    padding: 1rem;
+    width: calc(100% - 1rem);
+  }
+
+  .section-heading {
+    font-size: 1.6rem;
+  }
+
+  .service-text p {
+    text-align: center;
+  }
+
+  .plan-image {
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .service-card {
+    padding: 1.5rem;
+  }
+
+  .final-cta-section {
+    padding: 2rem 1rem;
+  }
+
+  .cta-heading {
+    font-size: 1.6rem;
+  }
+
+  .cta-text {
+    font-size: 1rem;
+  }
+}

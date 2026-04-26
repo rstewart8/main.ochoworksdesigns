@@ -1,0 +1,218 @@
+<div class="campaigns-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="header-title-section">
+        <a routerLink="/admin/marketing" class="back-link">← Dashboard</a>
+        <h1 class="page-title">Campaigns</h1>
+        <p class="page-subtitle">Create campaigns and manage their email campaigns</p>
+      </div>
+      <div class="header-actions">
+        <a routerLink="/admin/marketing/campaigns/new" class="btn btn-primary">
+          <span class="btn-icon">+</span>
+          New Campaign
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success/Error Messages -->
+  <div *ngIf="successMessage" class="message success-message">
+    <span>✓</span> {{ successMessage }}
+    <button class="message-close" (click)="successMessage = null">×</button>
+  </div>
+  
+  <div *ngIf="error && !loading" class="message error-message">
+    <span>⚠</span> {{ error }}
+    <button class="message-close" (click)="error = null">×</button>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="filters-section">
+    <div class="filters-row">
+      <!-- Search -->
+      <div class="search-box">
+        <input 
+          type="text" 
+          [(ngModel)]="searchQuery" 
+          placeholder="Search by campaign name..." 
+          class="search-input"
+          (keyup.enter)="onSearch()"
+        >
+        <button class="search-btn" (click)="onSearch()" title="Search">
+          🔍
+        </button>
+      </div>
+
+      <!-- Status Filter -->
+      <select class="filter-select" [(ngModel)]="selectedStatus" (change)="onStatusChange()">
+        <option *ngFor="let option of statusOptions" [value]="option.value">
+          {{ option.label }}
+        </option>
+      </select>
+
+      <!-- Clear Filters -->
+      <button 
+        *ngIf="hasActiveFilters()" 
+        class="btn btn-text" 
+        (click)="clearFilters()"
+      >
+        Clear Filters
+      </button>
+    </div>
+
+    <!-- Results Info -->
+    <div class="results-info" *ngIf="!loading">
+      <p class="results-text">
+        Showing {{ campaigns.length }} of {{ totalCampaigns }} campaigns
+        <span *ngIf="hasActiveFilters()"> (filtered)</span>
+      </p>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="loading-spinner"></div>
+    <p>Loading campaigns...</p>
+  </div>
+
+  <!-- No Results -->
+  <div *ngIf="!loading && !error && campaigns.length === 0" class="no-results">
+    <div class="no-results-content">
+      <div class="no-results-icon">📧</div>
+      <h3>No campaigns found</h3>
+      <p *ngIf="hasActiveFilters()">
+        Try adjusting your filters or search criteria.
+      </p>
+      <p *ngIf="!hasActiveFilters()">
+        Create your first campaign to get started.
+      </p>
+      <div class="no-results-actions">
+        <button *ngIf="hasActiveFilters()" class="btn btn-secondary" (click)="clearFilters()">
+          Clear Filters
+        </button>
+        <a routerLink="/admin/marketing/campaigns/new" class="btn btn-primary">
+          Create Your First Campaign
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Campaigns List -->
+  <div *ngIf="!loading && campaigns.length > 0" class="campaigns-list">
+    <div 
+      *ngFor="let campaign of campaigns; trackBy: trackByFn" 
+      class="campaign-card"
+      [class.draft]="campaign.status === 'active'"
+      [class.scheduled]="campaign.status === 'inactive'"
+      [class.sent]="campaign.status === 'deleted'"
+    >
+      <div class="campaign-main">
+        <div class="campaign-header">
+          <div class="campaign-title-section">
+            <h3 class="campaign-name">
+              <a [routerLink]="['/admin/marketing/campaigns', campaign.id]">
+                {{ campaign.name }}
+              </a>
+            </h3>
+            <p class="campaign-subject">Campaign ID: {{ campaign.id }}</p>
+          </div>
+          <div class="campaign-status">
+            <span class="status-badge" [ngClass]="getStatusClass(campaign.status)">
+              {{ getStatusIcon(campaign.status) }} {{ getStatusLabel(campaign.status) }}
+            </span>
+          </div>
+        </div>
+
+        <div class="campaign-meta">
+          <span class="meta-item">📝 Created: {{ formatDate(campaign.created_at) }}</span>
+          <span class="meta-item" *ngIf="campaign.updated_at">
+            🔄 Updated: {{ formatDateTime(campaign.updated_at) }}
+          </span>
+        </div>
+      </div>
+
+      <div class="campaign-actions">
+        <a 
+          [routerLink]="['/admin/marketing/campaigns', campaign.id]" 
+          class="action-btn" 
+          title="Manage Email Campaigns"
+        >
+          📁
+        </a>
+
+        <button 
+          class="action-btn delete-btn" 
+          (click)="confirmDelete(campaign)"
+          title="Delete Campaign"
+        >
+          🗑️
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <nav *ngIf="!loading && totalPages > 1" class="pagination" aria-label="Campaigns pagination">
+    <div class="pagination-info">
+      <p>Page {{ currentPage }} of {{ totalPages }}</p>
+    </div>
+
+    <div class="pagination-controls">
+      <button 
+        class="pagination-btn" 
+        [disabled]="currentPage <= 1" 
+        (click)="goToPage(currentPage - 1)"
+        title="Previous page"
+      >
+        ← Previous
+      </button>
+
+      <div class="pagination-numbers">
+        <button 
+          *ngFor="let page of getPaginationNumbers()" 
+          class="pagination-number"
+          [class.active]="page === currentPage" 
+          (click)="goToPage(page)"
+        >
+          {{ page }}
+        </button>
+      </div>
+
+      <button 
+        class="pagination-btn" 
+        [disabled]="currentPage >= totalPages" 
+        (click)="goToPage(currentPage + 1)"
+        title="Next page"
+      >
+        Next →
+      </button>
+    </div>
+  </nav>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal-overlay" *ngIf="showDeleteModal" (click)="cancelDelete()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Delete Campaign</h3>
+      <button class="modal-close" (click)="cancelDelete()">×</button>
+    </div>
+    <div class="modal-body">
+      <p>Are you sure you want to delete this campaign?</p>
+      <div class="campaign-to-delete" *ngIf="campaignToDelete">
+        <p><strong>{{ campaignToDelete.name }}</strong></p>
+        <p class="subject-preview">This will remove its email campaigns too (if your API enforces cascade delete).</p>
+      </div>
+      <p class="warning-text">This action cannot be undone.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="cancelDelete()" [disabled]="deleting">
+        Cancel
+      </button>
+      <button class="btn btn-danger" (click)="deleteCampaign()" [disabled]="deleting">
+        {{ deleting ? 'Deleting...' : 'Delete' }}
+      </button>
+    </div>
+  </div>
+</div>

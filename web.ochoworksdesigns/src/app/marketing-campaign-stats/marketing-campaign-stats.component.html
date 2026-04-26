@@ -1,0 +1,201 @@
+<div class="stats-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <a (click)="goBack()" class="back-link">← Back to Campaigns</a>
+      <h1 class="page-title">Campaign Statistics</h1>
+      <div class="campaign-info" *ngIf="campaign">
+        <h2 class="campaign-name">{{ campaign.name }}</h2>
+        <p class="campaign-subject">{{ campaign.subject }}</p>
+        <div class="campaign-meta">
+          <span class="status-badge" [ngClass]="getStatusClass(campaign.status)">
+            {{ getStatusLabel(campaign.status) }}
+          </span>
+          <span class="meta-item" *ngIf="campaign.started_at">
+            Started {{ formatDateTime(campaign.started_at) }}
+          </span>
+          <span class="meta-item" *ngIf="campaign.completed_at">
+            Sent {{ formatDateTime(campaign.completed_at) }}
+          </span>
+        </div>
+      </div>
+    </div>
+    <div class="header-actions" *ngIf="campaign">
+      <a
+        [routerLink]="getEditRoute()"
+        class="btn btn-secondary"
+        *ngIf="campaign.status === 'draft' || campaign.status === 'scheduled'"
+      >
+        ✏️ Edit Email Campaign
+      </a>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="loading-spinner"></div>
+    <p>Loading statistics...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="error-container">
+    <div class="error-message">
+      <h3>Oops! Something went wrong</h3>
+      <p>{{ error }}</p>
+      <button class="btn btn-primary" (click)="loadCampaignData()">Try Again</button>
+    </div>
+  </div>
+
+  <!-- Stats Content -->
+  <div *ngIf="!loading && !error && campaign" class="stats-content">
+    <!-- Key Metrics -->
+    <section class="metrics-section">
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-icon sent-icon">📤</div>
+          <div class="metric-content">
+            <span class="metric-value">{{ formatNumber(campaign.total_sent) }}</span>
+            <span class="metric-label">Emails Sent</span>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon opened-icon">📬</div>
+          <div class="metric-content">
+            <span class="metric-value">{{ formatNumber(campaign.total_opened) }}</span>
+            <span class="metric-label">Unique Opens</span>
+            <span class="metric-rate">{{ getOpenRate() }}% open rate</span>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon clicked-icon">👆</div>
+          <div class="metric-content">
+            <span class="metric-value">{{ formatNumber(campaign.total_clicked) }}</span>
+            <span class="metric-label">Unique Clicks</span>
+            <span class="metric-rate">{{ getClickRate() }}% click rate</span>
+          </div>
+        </div>
+
+        <div class="metric-card highlight">
+          <div class="metric-icon cto-icon">📈</div>
+          <div class="metric-content">
+            <span class="metric-value">{{ getClickToOpenRate() }}%</span>
+            <span class="metric-label">Click-to-Open Rate</span>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon bounced-icon">⚠️</div>
+          <div class="metric-content">
+            <span class="metric-value">{{ formatNumber(campaign.total_bounced) }}</span>
+            <span class="metric-label">Bounced</span>
+            <span class="metric-rate warning" *ngIf="getBounceRate() > 0">{{ getBounceRate() }}% bounce rate</span>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon unsub-icon">🚫</div>
+          <div class="metric-content">
+            <span class="metric-value">{{ formatNumber(campaign.total_unsubscribed) }}</span>
+            <span class="metric-label">Unsubscribed</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="tabs">
+      <button
+        class="tab"
+        [class.active]="activeTab === 'overview'"
+        (click)="setActiveTab('overview')"
+      >
+        📊 Overview
+      </button>
+      <button
+        class="tab"
+        [class.active]="activeTab === 'links'"
+        (click)="setActiveTab('links')"
+      >
+        🔗 Links
+      </button>
+    </div>
+
+    <!-- Overview Tab -->
+    <div class="tab-content" *ngIf="activeTab === 'overview'">
+      <div class="overview-grid">
+        <div class="chart-card">
+          <h3>Campaign Details</h3>
+          <div class="status-breakdown">
+            <div class="status-item">
+              <div class="status-info">
+                <span class="status-name">Campaign ID</span>
+                <span class="status-count">{{ campaign.id }}</span>
+              </div>
+            </div>
+            <div class="status-item">
+              <div class="status-info">
+                <span class="status-name">Parent Campaign</span>
+                <span class="status-count">{{ campaignId || '—' }}</span>
+              </div>
+            </div>
+            <div class="status-item">
+              <div class="status-info">
+                <span class="status-name">Recipients</span>
+                <span class="status-count">{{ campaign.total_recipients }}</span>
+              </div>
+            </div>
+            <div class="status-item">
+              <div class="status-info">
+                <span class="status-name">Tracking</span>
+                <span class="status-count">{{ isTrackingEnabled() ? 'Enabled' : 'Disabled' }}</span>
+              </div>
+            </div>
+            <div class="status-item" *ngIf="campaign.from_name || campaign.from_email">
+              <div class="status-info">
+                <span class="status-name">From</span>
+                <span class="status-count">{{ campaign.from_name || '—' }} &lt;{{ campaign.from_email || '—' }}&gt;</span>
+              </div>
+            </div>
+            <div class="status-item" *ngIf="campaign.reply_to">
+              <div class="status-info">
+                <span class="status-name">Reply-To</span>
+                <span class="status-count">{{ campaign.reply_to }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Links Tab -->
+    <div class="tab-content" *ngIf="activeTab === 'links'">
+      <div class="links-section">
+        <div *ngIf="campaign.links && campaign.links.length > 0" class="links-table-container">
+          <table class="links-table">
+            <thead>
+              <tr>
+                <th class="rank-col">#</th>
+                <th class="url-col">Link Name</th>
+                <th class="url-col">URL</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let link of campaign.links; let i = index; trackBy: trackByLinkFn">
+                <td class="rank-col">{{ i + 1 }}</td>
+                <td class="url-col">{{ link.link_name || '—' }}</td>
+                <td class="url-col">
+                  <a [href]="link.link_url" target="_blank" rel="noopener">{{ link.link_url }}</a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div *ngIf="!campaign.links || campaign.links.length === 0" class="no-data">
+          <p>No links found for this campaign.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

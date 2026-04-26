@@ -1,0 +1,461 @@
+<div class="campaign-send-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <a (click)="goBack()" class="back-link">← Back to Campaign</a>
+      <h1 class="page-title">Send Campaign</h1>
+      <div class="campaign-info" *ngIf="campaign">
+        <span class="campaign-name">{{ campaign.name }}</span>
+        <span class="status-badge" [ngClass]="getStatusClass(campaign.status)">
+          {{ getStatusLabel(campaign.status) }}
+        </span>
+      </div>
+    </div>
+    <div class="header-actions" *ngIf="!loading && canSend()">
+      <button 
+        class="btn btn-primary btn-large" 
+        (click)="openConfirmModal()"
+        [disabled]="selectedCount === 0 || sending"
+      >
+        📤 Send to {{ selectedCount }} Contact{{ selectedCount !== 1 ? 's' : '' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div *ngIf="successMessage" class="message success-message">
+    <span>✔</span> {{ successMessage }}
+    <button class="message-close" (click)="successMessage = null">×</button>
+  </div>
+  
+  <div *ngIf="error" class="message error-message">
+    <span>⚠</span> {{ error }}
+    <button class="message-close" (click)="error = null">×</button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="loading-spinner"></div>
+    <p>Loading campaign...</p>
+  </div>
+
+  <!-- Main Content -->
+  <div *ngIf="!loading && campaign" class="send-content">
+    <!-- Campaign Summary Card -->
+    <div class="card campaign-summary-card">
+      <div class="card-body">
+        <div class="summary-row">
+          <div class="summary-item">
+            <span class="summary-label">Subject</span>
+            <span class="summary-value">{{ campaign.subject }}</span>
+          </div>
+          <div class="summary-item" *ngIf="campaign.preview_text">
+            <span class="summary-label">Preview</span>
+            <span class="summary-value summary-preview">{{ campaign.preview_text }}</span>
+          </div>
+          <div class="summary-item" *ngIf="campaign.from_name || campaign.from_email">
+            <span class="summary-label">From</span>
+            <span class="summary-value">
+              {{ campaign.from_name || 'Default' }}
+              <span *ngIf="campaign.from_email">&lt;{{ campaign.from_email }}&gt;</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Selection Summary Bar -->
+    <div class="selection-bar">
+      <div class="selection-info">
+        <span class="selection-count">{{ selectedCount }}</span>
+        <span class="selection-label">contact{{ selectedCount !== 1 ? 's' : '' }} selected</span>
+      </div>
+      <div class="selection-actions">
+        <button 
+          class="btn btn-secondary btn-small" 
+          (click)="selectAllFiltered()"
+          [disabled]="loadingContacts"
+        >
+          Select All ({{ contactsTotal }})
+        </button>
+        <button 
+          class="btn btn-secondary btn-small" 
+          (click)="clearSelection()"
+          [disabled]="selectedCount === 0"
+        >
+          Clear Selection
+        </button>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card filters-card">
+      <div class="card-body">
+        <div class="filters-row">
+          <div class="filter-group filter-search">
+            <label>Search</label>
+            <input 
+              type="text" 
+              class="form-input"
+              placeholder="Search by name, email, or company..."
+              [(ngModel)]="searchQuery"
+              (keyup.enter)="applyFilters()"
+            >
+          </div>
+          <div class="filter-group">
+            <label>Tag</label>
+            <select [(ngModel)]="filterTag" class="form-select" (change)="applyFilters()">
+              <option value="">All Tags</option>
+              <option *ngFor="let tag of availableTags" [value]="tag">{{ tag }}</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Source</label>
+            <select [(ngModel)]="filterSource" class="form-select" (change)="applyFilters()">
+              <option value="">All Sources</option>
+              <option *ngFor="let source of availableSources" [value]="source">{{ source }}</option>
+            </select>
+          </div>
+          <div class="filter-group filter-checkbox">
+            <label class="checkbox-label">
+              <input 
+                type="checkbox" 
+                [(ngModel)]="subscribedOnly"
+                (change)="applyFilters()"
+                class="checkbox"
+              >
+              <span>Subscribed only</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Second row for City and State filters -->
+        <div class="filters-row filters-row-secondary">
+          <!-- City Multi-Select Filter -->
+          <div class="filter-group multi-select-container city-filter-container">
+            <label>City</label>
+            <button 
+              type="button" 
+              class="multi-select-trigger" 
+              [class.has-selection]="selectedCities.length > 0"
+              (click)="toggleCityDropdown();"
+            >
+              <span class="multi-select-text">{{ getCityDisplayText() }}</span>
+              <span class="multi-select-arrow" [class.open]="cityDropdownOpen">▼</span>
+            </button>
+            
+            <div class="multi-select-dropdown" *ngIf="cityDropdownOpen">
+              <div class="dropdown-search">
+                <input 
+                  type="text" 
+                  [(ngModel)]="citySearchQuery" 
+                  placeholder="Search cities..."
+                  class="dropdown-search-input"
+                  (click)="$event.stopPropagation()"
+                >
+              </div>
+              
+              <div class="dropdown-options">
+                <label 
+                  *ngFor="let city of getFilteredCities(); trackBy: trackByCityFn" 
+                  class="dropdown-option"
+                  (click)="$event.stopPropagation()"
+                >
+                  <input 
+                    type="checkbox" 
+                    [checked]="isCitySelected(city.city)"
+                    (change)="toggleCitySelection(city.city)"
+                  >
+                  <span class="option-label">{{ city.city }}</span>
+                  <span class="option-count">({{ city.cnt }})</span>
+                </label>
+                
+                <div *ngIf="getFilteredCities().length === 0" class="dropdown-no-results">
+                  No cities found
+                </div>
+              </div>
+              
+              <div class="dropdown-actions">
+                <button 
+                  type="button" 
+                  class="btn btn-text btn-small" 
+                  (click)="clearCitySelection(); $event.stopPropagation()"
+                >
+                  Clear
+                </button>
+                <button 
+                  type="button" 
+                  class="btn btn-primary btn-small" 
+                  (click)="applyCityFilter(); $event.stopPropagation()"
+                >
+                  Apply
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- State Multi-Select Filter -->
+          <div class="filter-group multi-select-container state-filter-container">
+            <label>State</label>
+            <button 
+              type="button" 
+              class="multi-select-trigger" 
+              [class.has-selection]="selectedStates.length > 0"
+              (click)="toggleStateDropdown()"
+            >
+              <span class="multi-select-text">{{ getStateDisplayText() }}</span>
+              <span class="multi-select-arrow" [class.open]="stateDropdownOpen">▼</span>
+            </button>
+            
+            <div class="multi-select-dropdown" *ngIf="stateDropdownOpen">
+              <div class="dropdown-search">
+                <input 
+                  type="text" 
+                  [(ngModel)]="stateSearchQuery" 
+                  placeholder="Search states..."
+                  class="dropdown-search-input"
+                  (click)="$event.stopPropagation()"
+                >
+              </div>
+              
+              <div class="dropdown-options">
+                <label 
+                  *ngFor="let state of getFilteredStates(); trackBy: trackByStateFn" 
+                  class="dropdown-option"
+                  (click)="$event.stopPropagation()"
+                >
+                  <input 
+                    type="checkbox" 
+                    [checked]="isStateSelected(state.state)"
+                    (change)="toggleStateSelection(state.state)"
+                  >
+                  <span class="option-label">{{ state.state }}</span>
+                  <span class="option-count">({{ state.cnt }})</span>
+                </label>
+                
+                <div *ngIf="getFilteredStates().length === 0" class="dropdown-no-results">
+                  No states found
+                </div>
+              </div>
+              
+              <div class="dropdown-actions">
+                <button 
+                  type="button" 
+                  class="btn btn-text btn-small" 
+                  (click)="clearStateSelection(); $event.stopPropagation()"
+                >
+                  Clear
+                </button>
+                <button 
+                  type="button" 
+                  class="btn btn-primary btn-small" 
+                  (click)="applyStateFilter(); $event.stopPropagation()"
+                >
+                  Apply
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="filter-actions">
+            <button class="btn btn-secondary btn-small" (click)="applyFilters()">
+              Apply
+            </button>
+            <button class="btn btn-secondary btn-small" (click)="resetFilters()">
+              Reset
+            </button>
+          </div>
+        </div>
+
+        <!-- Selected Filters Display -->
+        <div class="selected-filters" *ngIf="selectedCities.length > 0 || selectedStates.length > 0">
+          <span class="selected-filters-label">Active filters:</span>
+          
+          <span 
+            *ngFor="let city of selectedCities" 
+            class="filter-chip"
+          >
+            {{ city }}
+            <button type="button" class="chip-remove" (click)="toggleCitySelection(city); applyCityFilter()">×</button>
+          </span>
+          
+          <span 
+            *ngFor="let state of selectedStates" 
+            class="filter-chip filter-chip-state"
+          >
+            {{ state }}
+            <button type="button" class="chip-remove" (click)="toggleStateSelection(state); applyStateFilter()">×</button>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contacts Table -->
+    <div class="card contacts-card">
+      <div class="card-header">
+        <h2>Contacts ({{ contactsTotal }})</h2>
+        <div class="header-hint" *ngIf="contactsTotal > pageSize">
+          Showing {{ (currentPage - 1) * pageSize + 1 }} - {{ Math.min(currentPage * pageSize, contactsTotal) }} of {{ contactsTotal }}
+        </div>
+      </div>
+      <div class="card-body table-wrapper">
+        <!-- Loading -->
+        <div *ngIf="loadingContacts" class="loading-container-small">
+          <div class="loading-spinner-small"></div>
+          <span>Loading contacts...</span>
+        </div>
+
+        <!-- Table -->
+        <table class="contacts-table" *ngIf="!loadingContacts && contacts.length > 0">
+          <thead>
+            <tr>
+              <th class="col-select">
+                <input 
+                  type="checkbox" 
+                  [checked]="selectAllOnPageChecked"
+                  (change)="toggleSelectAllOnPage()"
+                  class="checkbox"
+                  title="Select all on this page"
+                >
+              </th>
+              <th class="col-email">Email</th>
+              <th class="col-name">Name</th>
+              <th class="col-company">Company / Location</th>
+              <th class="col-tags">Tags</th>
+              <th class="col-source">Source</th>
+              <th class="col-subscribed">Subscribed</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr 
+              *ngFor="let contact of contacts; trackBy: trackByContactId" 
+              [class.selected]="isContactSelected(contact.id)"
+              (click)="toggleContactSelection(contact.id)"
+            >
+              <td class="col-select" (click)="$event.stopPropagation()">
+                <input 
+                  type="checkbox" 
+                  [checked]="isContactSelected(contact.id)"
+                  (change)="toggleContactSelection(contact.id)"
+                  class="checkbox"
+                >
+              </td>
+              <td class="col-email">
+                <span class="email-text">{{ contact.email }}</span>
+              </td>
+              <td class="col-name">{{ contact.firstname }} {{ contact.lastname || '—' }}</td>
+              <td class="col-company">
+                {{ contact.company || '—' }}
+                <span class="location-text" *ngIf="contact.city || contact.state">
+                  <br>{{ contact.city || '' }}{{ contact.city && contact.state ? ', ' : '' }}{{ contact.state || '' }}
+                </span>
+              </td>
+              <td class="col-tags">
+                <span *ngIf="contact.tags && contact.tags.length > 0" class="tags-list">
+                  <span *ngFor="let tag of contact.tags.slice(0, 2)" class="tag-badge">{{ tag }}</span>
+                  <span *ngIf="contact.tags.length > 2" class="tag-more">+{{ contact.tags.length - 2 }}</span>
+                </span>
+                <span *ngIf="!contact.tags || contact.tags.length === 0" class="text-muted">—</span>
+              </td>
+              <td class="col-source">
+                <span class="source-badge" *ngIf="contact.source">{{ contact.source }}</span>
+                <span *ngIf="!contact.source" class="text-muted">—</span>
+              </td>
+              <td class="col-subscribed">
+                <span *ngIf="contact.is_subscribed" class="subscribed-yes">✔</span>
+                <span *ngIf="!contact.is_subscribed" class="subscribed-no">✗</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Empty State -->
+        <div *ngIf="!loadingContacts && contacts.length === 0" class="empty-state">
+          <p>No contacts found matching your filters.</p>
+          <button class="btn btn-secondary" (click)="resetFilters()">Reset Filters</button>
+        </div>
+      </div>
+
+      <!-- Pagination -->
+      <div class="card-footer" *ngIf="totalPages > 1">
+        <div class="pagination">
+          <button 
+            class="pagination-btn" 
+            (click)="goToPage(1)"
+            [disabled]="currentPage === 1"
+          >
+            ««
+          </button>
+          <button 
+            class="pagination-btn" 
+            (click)="goToPage(currentPage - 1)"
+            [disabled]="currentPage === 1"
+          >
+            «
+          </button>
+          <button 
+            *ngFor="let page of visiblePages"
+            class="pagination-btn"
+            [class.active]="page === currentPage"
+            (click)="goToPage(page)"
+          >
+            {{ page }}
+          </button>
+          <button 
+            class="pagination-btn" 
+            (click)="goToPage(currentPage + 1)"
+            [disabled]="currentPage === totalPages"
+          >
+            »
+          </button>
+          <button 
+            class="pagination-btn" 
+            (click)="goToPage(totalPages)"
+            [disabled]="currentPage === totalPages"
+          >
+            »»
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Send Modal -->
+<div class="modal-overlay" *ngIf="showConfirmModal" (click)="closeConfirmModal()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Confirm Send</h3>
+      <button class="modal-close" (click)="closeConfirmModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="confirm-summary">
+        <div class="confirm-icon">📤</div>
+        <p class="confirm-message">
+          You are about to send <strong>{{ campaign?.name }}</strong> to 
+          <strong>{{ selectedCount }}</strong> contact{{ selectedCount !== 1 ? 's' : '' }}.
+        </p>
+        <p class="confirm-subject">
+          Subject: <strong>{{ campaign?.subject }}</strong>
+        </p>
+      </div>
+      
+      <div class="warning-box">
+        <span>⚠️</span>
+        <span>This action cannot be undone. The campaign will be queued for immediate delivery.</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="closeConfirmModal()" [disabled]="sending">
+        Cancel
+      </button>
+      <button 
+        class="btn btn-primary" 
+        (click)="confirmSend()" 
+        [disabled]="sending"
+      >
+        {{ sending ? 'Sending...' : 'Confirm & Send' }}
+      </button>
+    </div>
+  </div>
+</div>

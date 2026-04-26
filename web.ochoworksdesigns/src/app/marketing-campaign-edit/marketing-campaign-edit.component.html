@@ -1,0 +1,682 @@
+<div class="campaign-edit-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <a (click)="goBack()" class="back-link">← Back to Campaigns</a>
+      <h1 class="page-title">{{ isEditMode ? 'Edit Email Campaign' : 'New Email Campaign' }}</h1>
+      <div class="campaign-status-bar" *ngIf="isEditMode && campaign.status">
+        <span class="status-badge" [ngClass]="getStatusClass(campaign.status || 'draft')">
+          {{ getStatusLabel(campaign.status || 'draft') }}
+        </span>
+        <span class="status-info" *ngIf="campaign.status === 'scheduled' && campaign.scheduled_at">
+          Scheduled for {{ formatDateTime(campaign.scheduled_at) }}
+        </span>
+        <span class="status-info" *ngIf="campaign.status === 'sent' && campaign.completed_at">
+          Sent on {{ formatDateTime(campaign.completed_at) }}
+        </span>
+      </div>
+    </div>
+    <div class="header-actions" *ngIf="!loading">
+      <button 
+        class="btn btn-secondary" 
+        (click)="openTestModal()"
+        [disabled]="!campaignId"
+        title="Send test email"
+      >
+        🧪 Send Test
+      </button>
+      <button 
+        class="btn btn-secondary" 
+        (click)="saveCampaign(true)"
+        [disabled]="saving || !canEdit()"
+      >
+        {{ saving ? 'Saving...' : 'Save Draft' }}
+      </button>
+      <button 
+        *ngIf="canSend() && campaign.status !== 'scheduled'"
+        class="btn btn-primary" 
+        (click)="openScheduleModal()"
+      >
+        🕐 Schedule
+      </button>
+      <button 
+        *ngIf="campaign.status === 'scheduled'"
+        class="btn btn-secondary" 
+        (click)="cancelSchedule()"
+      >
+        Cancel Schedule
+      </button>
+      <button 
+        *ngIf="canSendEmail()"
+        class="btn btn-primary" 
+        (click)="openSendModal()"
+      >
+        📤 Send Now
+      </button>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div *ngIf="successMessage" class="message success-message">
+    <span>✓</span> {{ successMessage }}
+    <button class="message-close" (click)="successMessage = null">×</button>
+  </div>
+  
+  <div *ngIf="error" class="message error-message">
+    <span>⚠</span> {{ error }}
+    <button class="message-close" (click)="error = null">×</button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="loading-spinner"></div>
+    <p>Loading email campaign...</p>
+  </div>
+
+  <!-- Editor Content -->
+  <div *ngIf="!loading" class="editor-content">
+    <!-- Tabs -->
+    <div class="tabs">
+      <button 
+        class="tab" 
+        [class.active]="activeTab === 'content'"
+        (click)="setActiveTab('content')"
+      >
+        ✏️ Content
+      </button>
+      <button 
+        class="tab" 
+        [class.active]="activeTab === 'settings'"
+        (click)="setActiveTab('settings')"
+      >
+        ⚙️ Settings
+      </button>
+      <button 
+        class="tab" 
+        [class.active]="activeTab === 'preview'"
+        (click)="setActiveTab('preview')"
+      >
+        👁️ Preview
+      </button>
+    </div>
+
+    <!-- Content Tab -->
+    <div class="tab-content" *ngIf="activeTab === 'content'">
+      <div class="card">
+        <div class="card-body">
+          <!-- Email Campaign Name -->
+          <div class="form-group">
+            <label for="name" class="required">Email Campaign Name</label>
+            <input 
+              type="text" 
+              id="name"
+              [(ngModel)]="campaign.name" 
+              class="form-input"
+              placeholder="e.g., February Newsletter"
+              [disabled]="!canEdit()"
+            >
+            <span class="form-hint">Internal name to identify this email campaign</span>
+          </div>
+
+          <!-- Subject Line -->
+          <div class="form-group">
+            <label for="subject" class="required">Email Subject</label>
+            <input 
+              type="text" 
+              id="subject"
+              [(ngModel)]="campaign.subject" 
+              class="form-input"
+              placeholder="e.g., Check out our latest designs!"
+              [disabled]="!canEdit()"
+            >
+            <div class="subject-preview" *ngIf="campaign.subject">
+              <span class="preview-label">Preview:</span>
+              <span class="preview-text">{{ campaign.subject }}</span>
+            </div>
+          </div>
+
+          <!-- Preview Text -->
+          <div class="form-group">
+            <label for="preview_text">Preview Text</label>
+            <input 
+              type="text" 
+              id="preview_text"
+              [(ngModel)]="campaign.preview_text" 
+              class="form-input"
+              placeholder="Brief summary shown in inbox preview"
+              [disabled]="!canEdit()"
+              maxlength="150"
+            >
+            <span class="form-hint">
+              {{ (campaign.preview_text?.length || 0) }}/150 characters
+            </span>
+          </div>
+
+          <!-- Campaign Links Section -->
+          <div class="form-group">
+            <div class="links-section-header">
+              <label>Campaign Links</label>
+              <button 
+                type="button" 
+                class="btn btn-secondary btn-small"
+                (click)="addLink()"
+                [disabled]="!canEdit()"
+              >
+                + Add Link
+              </button>
+            </div>
+            <span class="form-hint">Add links that will be included in the campaign</span>
+            <div class="warning-box">
+              <span>⚠</span>
+              <span>If campaign links are modified after emails are sent, tracking will be lost for those already sent emails.</span>
+            </div>
+            <span class="form-hint">
+              Use this token in Email Content to reference a campaign link:
+              <code ngNonBindable>{{link_url_&lt;link No&gt;}}</code>
+              (example: <code ngNonBindable>{{link_url_1}}</code>)
+            </span>
+            
+            <!-- Links List -->
+            <div class="links-list" *ngIf="campaignLinks.length > 0">
+              <div 
+                class="link-item" 
+                *ngFor="let link of campaignLinks; let i = index; trackBy: trackByIndex"
+              >
+                <div class="link-item-number">{{ i + 1 }}</div>
+                <div class="link-item-fields">
+                  <div class="form-group link-field">
+                    <label [for]="'link_name_' + i">Link Name</label>
+                    <input 
+                      type="text" 
+                      [id]="'link_name_' + i"
+                      [(ngModel)]="link.link_name" 
+                      class="form-input"
+                      placeholder="e.g., Learn More"
+                      [disabled]="!canEdit()"
+                    >
+                  </div>
+                  <div class="form-group link-field">
+                    <label [for]="'link_url_' + i">Link URL</label>
+                    <input 
+                      type="url" 
+                      [id]="'link_url_' + i"
+                      [(ngModel)]="link.link_url" 
+                      class="form-input"
+                      placeholder="https://example.com/page"
+                      [disabled]="!canEdit()"
+                    >
+                  </div>
+                </div>
+                <button 
+                  type="button" 
+                  class="btn-remove-link"
+                  (click)="removeLink(i)"
+                  [disabled]="!canEdit()"
+                  title="Remove link"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+
+            <!-- Empty State -->
+            <div class="links-empty" *ngIf="campaignLinks.length === 0">
+              <p>No links added yet. Click "Add Link" to add campaign links.</p>
+            </div>
+          </div>
+
+          <!-- Email Content -->
+          <div class="form-group">
+            <label for="content">Email Content (HTML)</label>
+            
+            <!-- Editor Toolbar -->
+            <div class="editor-toolbar" *ngIf="canEdit()">
+              <div class="toolbar-group">
+                <span class="toolbar-label">Insert:</span>
+                <button 
+                  type="button" 
+                  class="toolbar-btn" 
+                  (click)="showLinkModal = true"
+                  title="Insert Link"
+                >
+                  🔗 Link
+                </button>
+                <button 
+                  type="button" 
+                  class="toolbar-btn" 
+                  (click)="insertButton('primary')"
+                  title="Insert Button"
+                >
+                  🔘 Button
+                </button>
+                <button 
+                  type="button" 
+                  class="toolbar-btn" 
+                  (click)="insertDivider()"
+                  title="Insert Divider"
+                >
+                  ➖ Divider
+                </button>
+              </div>
+              
+              <div class="toolbar-group">
+                <span class="toolbar-label">Personalize:</span>
+                <select 
+                  class="toolbar-select"
+                  (change)="insertPersonalization($any($event.target).value); $any($event.target).value = ''"
+                >
+                  <option value="">Select token...</option>
+                  <option *ngFor="let token of personalizationTokens" [value]="token.token">
+                    {{ token.label }}
+                  </option>
+                </select>
+              </div>
+            </div>
+
+            <textarea 
+              id="content"
+              [(ngModel)]="campaign.content" 
+              class="form-textarea content-editor"
+              rows="20"
+              placeholder="Enter your email HTML content here..."
+              [disabled]="!canEdit()"
+            ></textarea>
+            <span class="form-hint">
+              Use HTML to format your email. Personalization tokens will be replaced with contact data.
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings Tab -->
+    <div class="tab-content" *ngIf="activeTab === 'settings'">
+      <div class="card">
+        <div class="card-header">
+          <h2>Sender Settings</h2>
+        </div>
+        <div class="card-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="from_name">From Name</label>
+              <input 
+                type="text" 
+                id="from_name"
+                [(ngModel)]="campaign.from_name" 
+                class="form-input"
+                placeholder="e.g., OchoWorks Designs and Drafting"
+                [disabled]="!canEdit()"
+              >
+              <span class="form-hint">Defaults to OchoWorks Designs and Drafting</span>
+            </div>
+            
+            <div class="form-group">
+              <label for="from_email">From Email</label>
+              <input 
+                type="email" 
+                id="from_email"
+                [(ngModel)]="campaign.from_email" 
+                class="form-input"
+                placeholder="e.g., randy@ochoworksdesigns.com"
+                [disabled]="!canEdit()"
+              >
+              <span class="form-hint">Defaults to randy&#64;ochoworksdesigns.com</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="reply_to">Reply-To Email</label>
+            <input 
+              type="email" 
+              id="reply_to"
+              [(ngModel)]="campaign.reply_to" 
+              class="form-input"
+              placeholder="e.g., randy@ochoworksdesigns.com"
+              [disabled]="!canEdit()"
+            >
+            <span class="form-hint">Defaults to randy&#64;ochoworksdesigns.com</span>
+          </div>
+
+          <div class="form-group">
+            <label>
+              <input
+                type="checkbox"
+                [(ngModel)]="campaign.track"
+                [disabled]="!canEdit()"
+              >
+              Use tracking
+            </label>
+            <span class="form-hint">Default is disabled</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Personalization Tokens Reference -->
+      <div class="card" style="margin-top: 1.5rem;">
+        <div class="card-header">
+          <h2>Personalization Tokens</h2>
+        </div>
+        <div class="card-body">
+          <p class="tokens-description">
+            Use these tokens in your email content to personalize messages for each recipient.
+          </p>
+          <div class="tokens-grid">
+            <div class="token-item" *ngFor="let token of personalizationTokens">
+              <code class="token-code">{{ token.token }}</code>
+              <span class="token-label">{{ token.label }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preview Tab -->
+    <div class="tab-content" *ngIf="activeTab === 'preview'">
+      <div class="preview-container">
+        <div class="preview-header">
+          <div class="preview-info">
+            <div class="preview-from">
+              <strong>From:</strong> 
+              {{ campaign.from_name || 'OchoWorks Designs and Drafting' }} 
+              &lt;{{ campaign.from_email || 'randy@ochoworksdesigns.com' }}&gt;
+            </div>
+            <div class="preview-subject">
+              <strong>Subject:</strong> {{ campaign.subject || '(No subject)' }}
+            </div>
+            <div class="preview-preheader" *ngIf="campaign.preview_text">
+              <strong>Preview:</strong> {{ campaign.preview_text }}
+            </div>
+          </div>
+        </div>
+        <div class="preview-body">
+          <div class="email-preview" [innerHTML]="campaign.content || '<p style=&quot;color: #999;&quot;>No content yet...</p>'"></div>
+          
+          <!-- Preview Campaign Links -->
+          <div class="preview-links" *ngIf="campaignLinks.length > 0">
+            <h4>Campaign Links:</h4>
+            <ul>
+              <li *ngFor="let link of campaignLinks">
+                <strong>{{ link.link_name || '(No name)' }}:</strong> 
+                <a [href]="link.link_url" target="_blank">{{ link.link_url || '(No URL)' }}</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="preview-footer">
+          <p class="preview-note">
+            ⚠️ This is a preview. Personalization tokens will be replaced with actual contact data when sent.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Send Campaign Modal -->
+<div class="modal-overlay" *ngIf="showSendModal" (click)="closeSendModal()">
+  <div class="modal modal-large" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Send Campaign</h3>
+      <button class="modal-close" (click)="closeSendModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="send-summary">
+        <h4>{{ campaign.name }}</h4>
+        <p class="send-subject">Subject: {{ campaign.subject }}</p>
+      </div>
+
+      <div class="send-mode-choice">
+        <h4>Who should receive this campaign?</h4>
+        <div class="mode-options">
+          <label class="mode-option">
+            <input type="radio" name="sendMode" [checked]="sendMode === 'filters'" (change)="setSendMode('filters')">
+            <span>All recipients matching filters</span>
+          </label>
+          <label class="mode-option">
+            <input type="radio" name="sendMode" [checked]="sendMode === 'contacts'" (change)="setSendMode('contacts')">
+            <span>Select specific contacts</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Filters (when "All matching filters") -->
+      <div class="filter-section" *ngIf="sendMode === 'filters'">
+        <h4>Filter Recipients</h4>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label>Tag</label>
+            <select 
+              [(ngModel)]="sendFilters.tag" 
+              class="form-select"
+              (change)="onFilterChange()"
+            >
+              <option value="">All Tags</option>
+              <option *ngFor="let tag of availableTags" [value]="tag">{{ tag }}</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label>Source</label>
+            <select 
+              [(ngModel)]="sendFilters.source" 
+              class="form-select"
+              (change)="onFilterChange()"
+            >
+              <option value="">All Sources</option>
+              <option *ngFor="let source of availableSources" [value]="source">{{ source }}</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input 
+              type="checkbox" 
+              [(ngModel)]="sendFilters.subscribedOnly"
+              (change)="onFilterChange()"
+              class="checkbox"
+            >
+            <span class="checkbox-text">Subscribed contacts only</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Contact picker (when "Select specific contacts") -->
+      <div class="contact-picker-section" *ngIf="sendMode === 'contacts'">
+        <h4>Select contacts</h4>
+        <div class="contact-picker-toolbar">
+          <input 
+            type="text" 
+            class="form-input contact-search"
+            placeholder="Search by name or email..."
+            [(ngModel)]="contactSearch"
+            (keyup.enter)="loadContactsForPicker()"
+          >
+          <button type="button" class="btn btn-secondary btn-small" (click)="loadContactsForPicker()">
+            Search
+          </button>
+          <button type="button" class="btn btn-secondary btn-small" (click)="selectAllOnPage()">
+            Select all on page
+          </button>
+          <button type="button" class="btn btn-secondary btn-small" (click)="clearContactSelection()">
+            Clear selection
+          </button>
+        </div>
+        <p class="picker-hint" *ngIf="contactsTotal > 0">
+          Showing up to 200 subscribed contacts. {{ selectedContactIds.length }} selected.
+        </p>
+        <div class="contact-picker-list-wrap">
+          <div *ngIf="loadingContacts" class="loading-small">
+            <div class="loading-spinner-small"></div>
+            <span>Loading contacts...</span>
+          </div>
+          <ul class="contact-picker-list" *ngIf="!loadingContacts && contactsForPicker.length > 0">
+            <li *ngFor="let contact of contactsForPicker" class="contact-picker-item">
+              <label class="contact-picker-row">
+                <input 
+                  type="checkbox" 
+                  [checked]="isContactSelected(contact.id)" 
+                  (change)="toggleContactSelection(contact.id)"
+                >
+                <span class="contact-email">{{ contact.email }}</span>
+                <span class="contact-name" *ngIf="contact.firstname"> — {{ contact.firstname }} {{ contact.lastname }}</span>
+              </label>
+            </li>
+          </ul>
+          <p *ngIf="!loadingContacts && contactsForPicker.length === 0" class="no-contacts-msg">
+            No subscribed contacts found. Use search to narrow results or add contacts first.
+          </p>
+        </div>
+      </div>
+
+      <div class="recipient-count">
+        <div *ngIf="sendMode === 'filters' && loadingRecipients" class="loading-small">
+          <div class="loading-spinner-small"></div>
+          <span>Counting recipients...</span>
+        </div>
+        <div *ngIf="(sendMode === 'filters' && !loadingRecipients) || sendMode === 'contacts'" class="count-display">
+          <span class="count-number">{{ sendRecipientCount }}</span>
+          <span class="count-label">recipients will receive this email</span>
+        </div>
+      </div>
+
+      <div class="warning-box" *ngIf="sendRecipientCount === 0">
+        <span>⚠️</span>
+        <span *ngIf="sendMode === 'filters'">No recipients match your filters. Adjust filters or add more contacts.</span>
+        <span *ngIf="sendMode === 'contacts'">Select at least one contact to send to.</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="closeSendModal()" [disabled]="sending">
+        Cancel
+      </button>
+      <button 
+        class="btn btn-primary" 
+        (click)="sendCampaign()" 
+        [disabled]="sending || sendRecipientCount === 0"
+      >
+        {{ sending ? 'Queuing...' : 'Send to ' + sendRecipientCount + ' Recipients' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Schedule Modal -->
+<div class="modal-overlay" *ngIf="showScheduleModal" (click)="closeScheduleModal()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Schedule Campaign</h3>
+      <button class="modal-close" (click)="closeScheduleModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <p>Choose when to send this campaign:</p>
+      
+      <div class="form-group">
+        <label for="schedule_date" class="required">Send Date & Time</label>
+        <input 
+          type="datetime-local" 
+          id="schedule_date"
+          [(ngModel)]="scheduleDateTime"
+          class="form-input"
+        >
+        <span class="form-hint">Campaign will be sent at this time (your local timezone)</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="closeScheduleModal()" [disabled]="scheduling">
+        Cancel
+      </button>
+      <button 
+        class="btn btn-primary" 
+        (click)="scheduleCampaign()" 
+        [disabled]="scheduling || !scheduleDateTime"
+      >
+        {{ scheduling ? 'Scheduling...' : 'Schedule Campaign' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Test Email Modal -->
+<div class="modal-overlay" *ngIf="showTestModal" (click)="closeTestModal()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Send Test Email</h3>
+      <button class="modal-close" (click)="closeTestModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <p>Send a test version of this campaign to preview how it looks.</p>
+      
+      <div class="form-group">
+        <label for="test_email" class="required">Email Address</label>
+        <input 
+          type="email" 
+          id="test_email"
+          [(ngModel)]="testEmail"
+          class="form-input"
+          placeholder="your@email.com"
+        >
+        <span class="form-hint">Test email will have [TEST] prefix in subject</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="closeTestModal()" [disabled]="sendingTest">
+        Cancel
+      </button>
+      <button 
+        class="btn btn-primary" 
+        (click)="sendTestEmail()" 
+        [disabled]="sendingTest || !testEmail"
+      >
+        {{ sendingTest ? 'Sending...' : 'Send Test' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Insert Link Modal -->
+<div class="modal-overlay" *ngIf="showLinkModal" (click)="showLinkModal = false">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Insert Link</h3>
+      <button class="modal-close" (click)="showLinkModal = false">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label for="link_url" class="required">URL</label>
+        <input 
+          type="url" 
+          id="link_url"
+          [(ngModel)]="linkUrl"
+          class="form-input"
+          placeholder="https://example.com"
+        >
+      </div>
+      
+      <div class="form-group">
+        <label for="link_text">Link Text (optional)</label>
+        <input 
+          type="text" 
+          id="link_text"
+          [(ngModel)]="linkText"
+          class="form-input"
+          placeholder="Click here"
+        >
+        <span class="form-hint">Leave blank to use the URL as link text</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="showLinkModal = false">
+        Cancel
+      </button>
+      <button 
+        class="btn btn-primary" 
+        (click)="insertLink()" 
+        [disabled]="!linkUrl"
+      >
+        Insert Link
+      </button>
+    </div>
+  </div>
+</div>

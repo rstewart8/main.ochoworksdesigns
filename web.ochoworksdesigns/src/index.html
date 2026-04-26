@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>OchoWorks Designs</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+
+  <!-- Open Graph tags -->
+  <meta property="og:title" content="OchoWorks Designs and Drafting Services" />
+  <meta property="og:description" content="OchoWorks Designs - Architecture Design and Drafting Services" />
+  <meta property="og:image" content="https://ochoworksdesigns.com/assets/images/plan-1.jpeg" />
+  <meta property="og:url" content="https://ochoworksdesigns.com" />
+  <meta property="og:type" content="website" />
+  
+  <!-- Twitter Card tags (optional, for better Twitter sharing) -->
+  <meta name="twitter:card" content="House Plans" />
+  <meta name="twitter:image" content="https://ochoworksdesigns.com/assets/images/plan-1.jpeg" />
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+
+  <!-- Google tag (gtag.js) - Only load in production -->
+  <script>
+    // Only load Google Analytics when not on localhost
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      // Create and append the gtag script
+      var script = document.createElement('script');
+      script.async = true;
+      script.src = 'https://www.googletagmanager.com/gtag/js?id=G-0M2GSZGKCM';
+      document.head.appendChild(script);
+
+      // Initialize gtag
+      window.dataLayer = window.dataLayer || [];
+      function gtag() { dataLayer.push(arguments); }
+      gtag('js', new Date());
+      gtag('config', 'G-0M2GSZGKCM');
+    } else {
+      // Optional: Log that GA is disabled in development
+      console.log('Google Analytics disabled in development environment');
+    }
+  </script>
+</head>
+
+<body>
+  <app-root></app-root>
+</body>
+
+</html>

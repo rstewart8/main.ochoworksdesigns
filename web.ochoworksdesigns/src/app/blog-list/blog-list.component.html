@@ -1,0 +1,227 @@
+<div class="blog-list-container">
+  <!-- Hero Section -->
+  <div class="blog-hero">
+    <div class="hero-content">
+      <h1 class="hero-title">Custom Home Plans & Design Insights</h1>
+      <p class="hero-subtitle">Expert architectural designs and building tips from OchoWorks Designs</p>
+    </div>
+  </div>
+
+  <!-- Featured Posts Section -->
+  <section *ngIf="featuredPosts.length > 0" class="featured-section">
+    <div class="container">
+      <h2 class="section-title">Featured Posts</h2>
+      <div class="featured-grid">
+        <article *ngFor="let post of featuredPosts; trackBy: trackByFn" class="featured-post"
+          [routerLink]="['/blog', post.slug]" (click)="incrementViews(post)">
+          <div class="featured-image">
+            <img [src]="getFeaturedImage(post)" [alt]="getFeaturedImageAlt(post)" class="post-image" loading="lazy">
+            <div class="featured-badge">Featured</div>
+          </div>
+          <div class="featured-content">
+            <div class="post-meta">
+              <span class="post-author">{{ post.author }}</span>
+              <span class="post-date">{{ formatDate(post.published_at || post.created_at) }}</span>
+            </div>
+            <h3 class="featured-title">{{ post.title }}</h3>
+            <p class="featured-excerpt">{{ post.excerpt || getExcerpt(post.content) }}</p>
+            <div class="post-tags" *ngIf="post.tags && post.tags.length > 0">
+              <span *ngFor="let tag of post.tags.slice(0, 3)" class="tag">{{ tag }}</span>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content -->
+  <div class="container">
+    <div class="blog-content">
+      <!-- Filters Section -->
+      <div class="filters-section">
+        <div class="filters-header">
+          <h2 class="filters-title">Browse All Posts</h2>
+          <div class="filters-actions">
+            <!-- Search -->
+            <div class="search-box">
+              <input type="text" [(ngModel)]="searchQuery" placeholder="Search posts..." class="search-input"
+                (keyup.enter)="onSearch()">
+              <button class="search-btn" (click)="onSearch()" title="Search">
+                🔍
+              </button>
+            </div>
+
+            <!-- Category Filter -->
+            <select class="category-filter" [(ngModel)]="selectedCategory"
+              (change)="onCategoryChange(selectedCategory)">
+              <option value="">All Categories</option>
+              <option *ngFor="let category of categories; trackBy: trackByCategoryFn" [value]="category.slug">
+                {{ category.name }}
+              </option>
+            </select>
+
+            <!-- Clear Filters -->
+            <button *ngIf="selectedCategory || searchQuery" class="clear-filters-btn" (click)="clearFilters()">
+              Clear Filters
+            </button>
+          </div>
+        </div>
+
+        <!-- Results Info -->
+        <div class="results-info" *ngIf="!loading">
+          <p class="results-text">
+            <span *ngIf="!selectedCategory && !searchQuery">
+              Showing {{ posts.length }} of {{ totalPosts }} posts
+            </span>
+            <span *ngIf="selectedCategory && !searchQuery">
+              Showing {{ posts.length }} of {{ totalPosts }} posts in category "{{ selectedCategory }}"
+            </span>
+            <span *ngIf="searchQuery">
+              Showing {{ posts.length }} of {{ totalPosts }} results for "{{ searchQuery }}"
+            </span>
+          </p>
+        </div>
+      </div>
+
+      <!-- Admin Status Filter -->
+      <div *ngIf="isAdmin()" class="status-filter-container">
+        <div class="status-filter">
+          <label class="filter-label">Filter by Status:</label>
+          <div class="status-multiselect">
+            <button class="status-dropdown-toggle" (click)="toggleStatusDropdown()">
+              <span class="selected-statuses">
+                {{ selectedStatuses.length === 1 ? selectedStatuses[0] : selectedStatuses.length + ' selected' }}
+              </span>
+              <span class="dropdown-arrow" [class.open]="showStatusDropdown">▼</span>
+            </button>
+
+            <div class="status-dropdown" [class.show]="showStatusDropdown">
+              <div class="status-option" *ngFor="let status of availableStatuses">
+                <label class="checkbox-label">
+                  <input type="checkbox" [checked]="isStatusSelected(status.value)"
+                    (change)="toggleStatus(status.value)" class="status-checkbox">
+                  <span class="checkbox-custom"></span>
+                  <span class="status-label">{{ status.label }}</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div *ngIf="loading" class="loading-container">
+        <div class="loading-spinner"></div>
+        <p>Loading posts...</p>
+      </div>
+
+      <!-- Error State -->
+      <div *ngIf="error && !loading" class="error-container">
+        <div class="error-message">
+          <h3>Oops! Something went wrong</h3>
+          <p>{{ error }}</p>
+          <button class="retry-btn" (click)="loadPosts()">Try Again</button>
+        </div>
+      </div>
+
+      <!-- No Results -->
+      <div *ngIf="!loading && !error && posts.length === 0" class="no-results">
+        <div class="no-results-content">
+          <h3>No posts found</h3>
+          <p *ngIf="searchQuery || selectedCategory">
+            Try adjusting your search criteria or browse all posts.
+          </p>
+          <p *ngIf="!searchQuery && !selectedCategory">
+            Check back soon for new content!
+          </p>
+          <button *ngIf="searchQuery || selectedCategory" class="action-btn" (click)="clearFilters()">
+            View All Posts
+          </button>
+        </div>
+      </div>
+
+      <!-- Posts Grid -->
+      <div *ngIf="!loading && !error && posts.length > 0" class="posts-grid">
+        <article *ngFor="let post of posts; trackBy: trackByFn" class="post-card" [routerLink]="['/blog/list', post.slug]"
+          (click)="incrementViews(post)">
+          <div class="post-image-container">
+            <img [src]="getFeaturedImage(post)" [alt]="getFeaturedImageAlt(post)" class="post-image" loading="lazy">
+            <div class="post-overlay">
+              <div class="read-more">Read More</div>
+            </div>
+          </div>
+
+          <div class="post-content">
+            <div class="post-meta">
+              <span class="post-category" *ngIf="post.category">{{ post.category }}</span>
+              <span class="post-read-time" *ngIf="post.read_time">{{ post.read_time }} min read</span>
+            </div>
+
+            <h3 class="post-title">{{ post.title }}</h3>
+
+            <p class="post-excerpt">{{ post.excerpt || getExcerpt(post.content) }}</p>
+
+            <div class="post-footer">
+              <div class="post-author-date">
+                <span class="post-author">By {{ post.author }}</span>
+                <span class="post-date">{{ formatDate(post.published_at || post.created_at) }}</span>
+              </div>
+
+              <div class="post-stats" *ngIf="post.views">
+                <span class="views-count">{{ post.views }} views</span>
+              </div>
+            </div>
+
+            <div class="post-tags" *ngIf="post.tags && post.tags.length > 0">
+              <span *ngFor="let tag of post.tags" class="tag">{{ tag }}</span>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <!-- Pagination -->
+      <nav *ngIf="!loading && !error && totalPages > 1" class="pagination" aria-label="Blog pagination">
+        <div class="pagination-info">
+          <p>Page {{ currentPage }} of {{ totalPages }}</p>
+        </div>
+
+        <div class="pagination-controls">
+          <!-- Previous -->
+          <button class="pagination-btn" [disabled]="currentPage <= 1" (click)="goToPage(currentPage - 1)"
+            title="Previous page">
+            ← Previous
+          </button>
+
+          <!-- Page Numbers -->
+          <div class="pagination-numbers">
+            <button *ngFor="let page of getPaginationNumbers()" class="pagination-number"
+              [class.active]="page === currentPage" (click)="goToPage(page)">
+              {{ page }}
+            </button>
+          </div>
+
+          <!-- Next -->
+          <button class="pagination-btn" [disabled]="currentPage >= totalPages" (click)="goToPage(currentPage + 1)"
+            title="Next page">
+            Next →
+          </button>
+        </div>
+      </nav>
+    </div>
+  </div>
+
+  <!-- Newsletter Section -->
+  <!-- <section class="newsletter-section">
+    <div class="container">
+      <div class="newsletter-content">
+        <h2 class="newsletter-title">Stay Updated</h2>
+        <p class="newsletter-text">Get the latest home design insights and architectural tips delivered to your inbox.
+        </p>
+        <div class="newsletter-form">
+          <input type="email" placeholder="Enter your email" class="newsletter-input">
+          <button class="newsletter-btn">Subscribe</button>
+        </div>
+      </div>
+    </div>
+  </section> -->
+</div>

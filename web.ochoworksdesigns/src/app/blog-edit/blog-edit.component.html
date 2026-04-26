@@ -1,0 +1,457 @@
+<div class="blog-edit-container">
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="loading-spinner"></div>
+    <p>{{ isEditMode ? 'Loading post for editing...' : 'Loading editor...' }}</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="error-container">
+    <div class="error-message">
+      <h3>Error</h3>
+      <p>{{ error }}</p>
+      <div class="error-actions">
+        <button class="action-btn secondary" (click)="goBack()">Go Back</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Blog Edit Form -->
+  <div *ngIf="!loading" class="edit-content">
+    <!-- Header -->
+    <div class="edit-header">
+      <div class="header-content">
+        <div class="header-text">
+          <h1 class="page-title">{{ isEditMode ? 'Edit Blog Post' : 'Create New Blog Post' }}</h1>
+          <p class="page-subtitle" *ngIf="isEditMode && post">Editing: {{ post.title }}</p>
+        </div>
+        <div class="header-actions">
+          <button class="action-btn secondary" (click)="cancel()">Cancel</button>
+          <button class="action-btn secondary" (click)="previewPost()" [disabled]="blogForm.invalid">Preview</button>
+          <button class="action-btn primary" (click)="onSubmit()"
+            [disabled]="saving || blogForm.invalid || hasUploadingImages() || hasPendingUploads()">
+            <span *ngIf="!saving">{{ isEditMode ? 'Update Post' : 'Create Post' }}</span>
+            <span *ngIf="saving">{{ isEditMode ? 'Updating...' : 'Creating...' }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Success Message -->
+    <div *ngIf="successMessage" class="success-message">
+      <p>{{ successMessage }}</p>
+    </div>
+
+    <!-- Form -->
+    <form [formGroup]="blogForm" (ngSubmit)="onSubmit()" class="blog-form">
+      <div class="form-grid">
+        <!-- Left Column - Main Content -->
+        <div class="main-content">
+          <!-- Title -->
+          <div class="form-group">
+            <label for="title" class="form-label required">Title</label>
+            <input type="text" id="title" formControlName="title" class="form-input"
+              [class.error]="isFieldInvalid('title')" placeholder="Enter a compelling title for your blog post">
+            <div class="field-info">
+              <span class="char-count">{{ getCharacterCount('title') }}/200 characters</span>
+            </div>
+            <div *ngIf="isFieldInvalid('title')" class="field-error">
+              {{ getFieldError('title') }}
+            </div>
+          </div>
+
+          <!-- Slug -->
+          <div class="form-group">
+            <label for="slug" class="form-label required">URL Slug</label>
+            <input type="text" id="slug" formControlName="slug" class="form-input"
+              [class.error]="isFieldInvalid('slug')" placeholder="url-friendly-slug">
+            <div class="field-help">
+              This will be the URL path for your post. Use lowercase letters, numbers, and hyphens only.
+            </div>
+            <div *ngIf="isFieldInvalid('slug')" class="field-error">
+              {{ getFieldError('slug') }}
+            </div>
+          </div>
+
+          <!-- Excerpt -->
+          <div class="form-group">
+            <label for="excerpt" class="form-label required">Excerpt</label>
+            <textarea id="excerpt" formControlName="excerpt" class="form-textarea"
+              [class.error]="isFieldInvalid('excerpt')" rows="3"
+              placeholder="Write a brief summary that will appear in blog listings and search results..."></textarea>
+            <div class="field-info">
+              <span class="char-count">{{ getCharacterCount('excerpt') }}/500 characters</span>
+            </div>
+            <div *ngIf="isFieldInvalid('excerpt')" class="field-error">
+              {{ getFieldError('excerpt') }}
+            </div>
+          </div>
+
+          <!-- Content -->
+          <div class="form-group">
+            <label for="content" class="form-label required">Content</label>
+            <textarea id="content" formControlName="content" class="form-textarea content-editor"
+              [class.error]="isFieldInvalid('content')" rows="20"
+              placeholder="Write your blog post content here. You can use HTML tags for formatting..."></textarea>
+            <div class="field-info">
+              <span class="word-count">{{ getWordsCount('content') }} words</span>
+              <span class="read-time">~{{ calculateReadTime(blogForm.get('content')?.value || '') }} min read</span>
+            </div>
+            <div *ngIf="isFieldInvalid('content')" class="field-error">
+              {{ getFieldError('content') }}
+            </div>
+            <div class="field-help">
+              Tip: Aim for at least 300 words for better SEO. You can use basic HTML tags like &lt;p&gt;, &lt;h2&gt;,
+              &lt;h3&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;ul&gt;, &lt;ol&gt;, &lt;li&gt;, &lt;a&gt;, etc.
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column - Metadata & Settings -->
+        <div class="sidebar-content">
+          <!-- SEO Score Card -->
+          <div class="info-card seo-card">
+            <h3 class="card-title">SEO Score</h3>
+            <div class="seo-score">
+              <div class="score-circle" [style.border-color]="getSEOScoreColor()">
+                <span class="score-number" [style.color]="getSEOScoreColor()">{{ getSEOScore() }}</span>
+              </div>
+              <div class="score-info">
+                <p class="score-text">Content optimization score</p>
+                <p class="score-description">{{ getSEOScore() >= 80 ? 'Excellent!' : getSEOScore() >= 60 ? 'Good, but
+                  could be better' : 'Needs improvement' }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Publishing Settings -->
+          <div class="info-card">
+            <h3 class="card-title">Publishing</h3>
+
+            <!-- Status -->
+            <div class="form-group">
+              <label for="status" class="form-label required">Status</label>
+              <select id="status" formControlName="status" class="form-select">
+                <option value="draft">Draft</option>
+                <option value="published">Published</option>
+                <option value="archived">Archived</option>
+              </select>
+            </div>
+
+            <!-- Author -->
+            <div class="form-group">
+              <label for="author" class="form-label required">Author</label>
+              <input type="text" id="author" formControlName="author" class="form-input"
+                [class.error]="isFieldInvalid('author')" placeholder="Author name">
+              <div *ngIf="isFieldInvalid('author')" class="field-error">
+                {{ getFieldError('author') }}
+              </div>
+            </div>
+
+            <!-- Plan No -->
+            <div class="form-group">
+              <label for="plan_no" class="form-label">Plan Number</label>
+              <input type="text" id="plan_no" formControlName="plan_no" class="form-input"
+                [class.error]="isFieldInvalid('plan_no')" placeholder="PLAN_192087-1">
+              <div *ngIf="isFieldInvalid('plan_no')" class="field-error">
+                {{ getFieldError('plan_no') }}
+              </div>
+              <div class="field-help">
+                Enter the plan number if this blog post is related to a specific house plan.
+              </div>
+            </div>
+
+            <!-- Category -->
+            <div class="form-group">
+              <label for="category" class="form-label">Category</label>
+              <select id="category" formControlName="category" class="form-select">
+                <option value="">Select a category</option>
+                <option *ngFor="let category of getCategoriesArray(); trackBy: trackByFn" [value]="category.slug">
+                  {{ category.name }}
+                </option>
+              </select>
+            </div>
+
+            <!-- Tags -->
+            <div class="form-group">
+              <label for="tags" class="form-label">Tags</label>
+              <input type="text" id="tags" formControlName="tags" class="form-input" placeholder="tag1, tag2, tag3">
+              <div class="field-help">
+                Separate tags with commas. Use 3-5 relevant tags for better discoverability.
+              </div>
+            </div>
+          </div>
+
+          <!-- Multiple Images Management -->
+          <div class="info-card">
+            <h3 class="card-title">Images ({{ getImageCount() }}/{{ maxImages }})</h3>
+
+            <!-- Upload Summary (show when there are pending uploads) -->
+            <div *ngIf="hasPendingUploads() || hasUploadingImages()" class="upload-summary">
+              <div class="summary-info">
+                <span *ngIf="hasPendingUploads()" class="pending-count">
+                  {{ getPendingUploadsCount() }} image(s) ready to upload
+                </span>
+                <span *ngIf="hasUploadingImages()" class="uploading-count">
+                  {{ getUploadingImagesCount() }} uploading...
+                </span>
+              </div>
+              <button type="button" class="action-btn primary small" (click)="uploadAllImages()"
+                [disabled]="!hasPendingUploads() || hasUploadingImages()">
+                Upload All
+              </button>
+            </div>
+
+            <!-- Current Images -->
+            <div *ngIf="hasImages()" class="current-images">
+              <div class="images-grid">
+                <div *ngFor="let image of imageUrls; let i = index; trackBy: trackByFn" class="image-item"
+                  [class.featured]="image.isFeatured" [class.pending]="!image.isUploaded"
+                  [class.uploading]="image.isUploading">
+
+                  <!-- Image Preview -->
+                  <div class="image-preview">
+                    <img [src]="image.url" [alt]="image.alt || 'Blog image'" class="preview-image"
+                      [style.opacity]="image.isUploading ? '0.5' : '1'">
+
+                    <!-- Featured Badge -->
+                    <div *ngIf="image.isFeatured" class="featured-badge">
+                      ★ Featured
+                    </div>
+
+                    <!-- Upload Status Badge -->
+                    <div *ngIf="!image.isUploaded && !image.isUploading" class="status-badge pending">
+                      Pending Upload
+                    </div>
+
+                    <!-- Upload Progress Overlay -->
+                    <div *ngIf="image.isUploading" class="upload-overlay">
+                      <div class="upload-progress-circle">
+                        <span class="progress-text">Uploading...</span>
+                      </div>
+                    </div>
+
+                    <!-- Image Controls -->
+                    <div class="image-controls" *ngIf="!image.isUploading">
+                      <!-- Upload Button (only show for non-uploaded files) -->
+                      <button type="button" class="control-btn upload" (click)="uploadImage(image.id)"
+                        [disabled]="image.isUploaded || !image.file" *ngIf="!image.isUploaded && image.file"
+                        title="Upload image">
+                        ⬆
+                      </button>
+
+                      <!-- Move Up -->
+                      <button type="button" class="control-btn" (click)="moveImageUp(image.id)" [disabled]="i === 0"
+                        title="Move up">
+                        ↑
+                      </button>
+
+                      <!-- Move Down -->
+                      <button type="button" class="control-btn" (click)="moveImageDown(image.id)"
+                        [disabled]="i === imageUrls.length - 1" title="Move down">
+                        ↓
+                      </button>
+
+                      <!-- Set Featured -->
+                      <button type="button" class="control-btn" (click)="setFeaturedImage(image.id)"
+                        [disabled]="image.isFeatured" title="Set as featured">
+                        ★
+                      </button>
+
+                      <!-- Remove -->
+                      <button type="button" class="control-btn remove" (click)="removeImage(image.id)"
+                        title="Remove image">
+                        ×
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Image URL Input -->
+                  <div class="image-url-group">
+                    <label class="url-label">Image URL:</label>
+                    <input type="url" class="url-input" [value]="image.url" (input)="updateImageUrl(image.id, $event)"
+                      [disabled]="image.isUploading || (!image.isUploaded && image.file)"
+                      [readonly]="!image.isUploaded && image.file" placeholder="https://example.com/image.jpg">
+                  </div>
+
+                  <!-- Image Alt Text Input -->
+                  <div class="image-url-group">
+                    <label class="url-label">Alt Text:</label>
+                    <input type="text" class="url-input" [value]="image.alt || ''"
+                      (input)="updateImageAlt(image.id, $event)" [disabled]="image.isUploading"
+                      placeholder="Descriptive alt text">
+                  </div>
+
+                  <!-- File Info (for pending uploads) -->
+                  <div *ngIf="image.file && !image.isUploaded" class="file-info">
+                    <span class="file-name">{{ image.file.name }}</span>
+                    <span class="file-size">({{ (image.file.size / 1024 / 1024).toFixed(2) }} MB)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- No Images Message -->
+            <div *ngIf="!hasImages()" class="no-images-message">
+              <p>No images added yet. Add images using the options below.</p>
+            </div>
+
+            <!-- Add New Images Section -->
+            <div class="add-image-section">
+              <h4 class="section-title">Add New Images</h4>
+
+              <!-- File Upload -->
+              <div class="upload-section">
+                <input type="file" #fileInput (change)="onFilesSelected($event)" accept="image/*" multiple
+                  class="file-input" id="imageUpload" [disabled]="imageUrls.length >= maxImages">
+                <label for="imageUpload" class="file-label" [class.disabled]="imageUrls.length >= maxImages">
+                  <span class="upload-icon">📁</span>
+                  Choose Images
+                </label>
+              </div>
+
+              <div class="field-help">
+                Select multiple images to preview them. Use upload buttons to upload them individually. JPG, PNG, WebP,
+                max 5MB each
+              </div>
+
+              <!-- OR Divider -->
+              <div class="divider">
+                <span>OR</span>
+              </div>
+
+              <!-- Add by URL -->
+              <div class="url-add-section">
+                <label for="newImageUrl" class="form-label">Add Image by URL</label>
+                <div class="url-input-group">
+                  <input type="url" id="newImageUrl" [(ngModel)]="newImageUrl" [ngModelOptions]="{standalone: true}"
+                    class="form-input" [class.error]="newImageUrlError" placeholder="https://example.com/image.jpg"
+                    [disabled]="imageUrls.length >= maxImages">
+                  <button type="button" class="action-btn primary small" (click)="addImageByUrl()"
+                    [disabled]="!newImageUrl.trim() || imageUrls.length >= maxImages">
+                    Add
+                  </button>
+                </div>
+                <div *ngIf="newImageUrlError" class="field-error">
+                  {{ newImageUrlError }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SEO Settings -->
+          <div class="info-card">
+            <h3 class="card-title">SEO Settings</h3>
+
+            <!-- Meta Title -->
+            <div class="form-group">
+              <label for="meta_title" class="form-label">Meta Title</label>
+              <input type="text" id="meta_title" formControlName="meta_title" class="form-input"
+                [class.error]="isFieldInvalid('meta_title')" placeholder="SEO-optimized title">
+              <div class="field-info">
+                <span class="char-count">{{ getCharacterCount('meta_title') }}/60 characters</span>
+                <span class="seo-indicator"
+                  [class]="getCharacterCount('meta_title') >= 30 && getCharacterCount('meta_title') <= 60 ? 'good' : 'warning'">
+                  {{ getCharacterCount('meta_title') >= 30 && getCharacterCount('meta_title') <= 60 ? '✓' : '⚠️' }}
+                    </span>
+              </div>
+              <div *ngIf="isFieldInvalid('meta_title')" class="field-error">
+                {{ getFieldError('meta_title') }}
+              </div>
+            </div>
+
+            <!-- Meta Description -->
+            <div class="form-group">
+              <label for="meta_description" class="form-label">Meta Description</label>
+              <textarea id="meta_description" formControlName="meta_description" class="form-textarea"
+                [class.error]="isFieldInvalid('meta_description')" rows="3"
+                placeholder="Brief description for search engines"></textarea>
+              <div class="field-info">
+                <span class="char-count">{{ getCharacterCount('meta_description') }}/160 characters</span>
+                <span class="seo-indicator"
+                  [class]="getCharacterCount('meta_description') >= 120 && getCharacterCount('meta_description') <= 155 ? 'good' : 'warning'">
+                  {{ getCharacterCount('meta_description') >= 120 && getCharacterCount('meta_description') <= 155 ? '✓'
+                    : '⚠️' }} </span>
+              </div>
+              <div *ngIf="isFieldInvalid('meta_description')" class="field-error">
+                {{ getFieldError('meta_description') }}
+              </div>
+            </div>
+
+            <!-- Meta Keywords This is obsolete now-->
+            <!-- <div class="form-group">
+              <label for="meta_keywords" class="form-label">Meta Keywords</label>
+              <input 
+                type="text" 
+                id="meta_keywords" 
+                formControlName="meta_keywords" 
+                class="form-input"
+                [class.error]="isFieldInvalid('meta_keywords')"
+                placeholder="keyword1, keyword2, keyword3">
+              <div class="field-info">
+                <span class="char-count">{{ getCharacterCount('meta_keywords') }}/200 characters</span>
+              </div>
+              <div *ngIf="isFieldInvalid('meta_keywords')" class="field-error">
+                {{ getFieldError('meta_keywords') }}
+              </div>
+              <div class="field-help">
+                Separate keywords with commas. Focus on 5-10 relevant keywords.
+              </div>
+            </div> -->
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="info-card">
+            <h3 class="card-title">Quick Actions</h3>
+            <div class="quick-actions">
+              <button type="button" class="action-btn secondary full-width" (click)="previewPost()"
+                [disabled]="blogForm.invalid">
+                <span class="action-icon">👁️</span>
+                Preview Post
+              </button>
+              <button type="button" class="action-btn secondary full-width" [routerLink]="['/admin/blog']">
+                <span class="action-icon">📄</span>
+                All Posts
+              </button>
+              <button type="button" class="action-btn secondary full-width" [routerLink]="['/blog']">
+                <span class="action-icon">🌐</span>
+                View Blog
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="form-actions">
+        <button type="button" class="action-btn secondary large" (click)="cancel()">
+          <span class="action-icon">✖</span>
+          <div class="action-content">
+            <span class="action-title">Cancel</span>
+            <span class="action-description">Discard changes</span>
+          </div>
+        </button>
+
+        <button type="button" class="action-btn secondary large" (click)="previewPost()" [disabled]="blogForm.invalid">
+          <span class="action-icon">👁️</span>
+          <div class="action-content">
+            <span class="action-title">Preview</span>
+            <span class="action-description">See how it looks</span>
+          </div>
+        </button>
+
+        <button type="submit" class="action-btn primary large"
+          [disabled]="saving || blogForm.invalid || hasUploadingImages() || hasPendingUploads()">
+          <span class="action-icon">{{ isEditMode ? '💾' : '✨' }}</span>
+          <div class="action-content">
+            <span class="action-title">
+              <span *ngIf="!saving">{{ isEditMode ? 'Update Post' : 'Create Post' }}</span>
+              <span *ngIf="saving">{{ isEditMode ? 'Updating...' : 'Creating...' }}</span>
+            </span>
+            <span class="action-description">{{ isEditMode ? 'Save your changes' : 'Publish your post' }}</span>
+          </div>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

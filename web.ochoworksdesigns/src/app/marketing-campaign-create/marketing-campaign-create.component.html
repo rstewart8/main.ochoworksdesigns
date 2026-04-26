@@ -1,0 +1,57 @@
+<div class="campaign-create-container">
+  <div class="page-header">
+    <div>
+      <a routerLink="/admin/marketing/campaigns" class="back-link">← Back to Campaigns</a>
+      <h1 class="page-title">Create Campaign</h1>
+      <p class="page-subtitle">Create a campaign now and add email campaigns later.</p>
+    </div>
+  </div>
+
+  <div *ngIf="successMessage" class="message success-message">
+    <span>✓</span> {{ successMessage }}
+  </div>
+
+  <div *ngIf="error" class="message error-message">
+    <span>⚠</span> {{ error }}
+  </div>
+
+  <form class="card" (ngSubmit)="createCampaign()">
+    <section class="section">
+      <h2 class="section-title">Campaign</h2>
+      <div class="form-group">
+        <label for="campaignName" class="required">Campaign Name</label>
+        <input
+          id="campaignName"
+          type="text"
+          class="form-input"
+          [(ngModel)]="campaignName"
+          name="campaignName"
+          placeholder="e.g., Spring 2026 Promotion"
+          [disabled]="saving"
+          required
+        >
+      </div>
+    </section>
+
+    <div class="actions">
+      <button type="submit" class="btn btn-primary" [disabled]="saving">
+        {{ saving ? 'Creating...' : 'Create Campaign' }}
+      </button>
+      <button type="button" class="btn btn-secondary" routerLink="/admin/marketing/campaigns" [disabled]="saving">
+        Cancel
+      </button>
+      <button
+        *ngIf="createdCampaignId"
+        type="button"
+        class="btn btn-secondary"
+        (click)="goToCampaignDetail()"
+      >
+        Open Campaign
+      </button>
+    </div>
+  </form>
+
+  <div *ngIf="createdCampaignId" class="create-summary">
+    <p *ngIf="createdCampaignId">Campaign ID: <strong>{{ createdCampaignId }}</strong></p>
+  </div>
+</div>

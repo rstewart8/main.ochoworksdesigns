@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "8888:80"
+    volumes:
+      - .:/var/www/html
+      - /var/log/ochoworksdesigns:/var/log/ochoworksdesigns
+    depends_on:
+      - db
+    environment:
+      - APACHE_DOCUMENT_ROOT=/var/www/html/public
+
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: ochoworksdesigns
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: admin_password
+    ports:
+      - "3307:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./sqls/dumps/backup.sql:/docker-entrypoint-initdb.d/backup.sql:ro
+
+volumes:
+  db_data:

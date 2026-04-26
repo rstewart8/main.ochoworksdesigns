@@ -1,0 +1,381 @@
+.about-container {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 40px 20px;
+  background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+  min-height: 75vh;
+  position: relative;
+}
+
+.about-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(255,255,255,0.1) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(255,255,255,0.1) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(255,255,255,0.1) 75%);
+  background-size: 30px 30px;
+  background-position: 0 0, 0 15px, 15px -15px, -15px 0px;
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.about-header {
+  text-align: center;
+  margin-bottom: 60px;
+  position: relative;
+}
+
+.about-header h1 {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 2.5rem;
+  color: #2c5282;
+  margin: 0;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.header-line {
+  width: 300px;
+  height: 3px;
+  background: linear-gradient(90deg, #4299e1 0%, #63b3ed 100%);
+  margin: 15px auto 0;
+  border-radius: 2px;
+}
+
+/* Intro Section */
+.intro-section {
+  max-width: 800px;
+  margin: 0 auto 60px;
+  position: relative;
+}
+
+.intro-text {
+  font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 1.25rem;
+  line-height: 1.8;
+  color: #2d3748;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 35px 40px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border-left: 5px solid #4299e1;
+  margin: 0;
+  font-weight: 400;
+}
+
+/* Team Section */
+.team-section {
+  display: flex;
+  flex-direction: column;
+  gap: 50px;
+  max-width: 1000px;
+  margin: 0 auto 60px;
+  position: relative;
+}
+
+.team-member {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 40px;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
+}
+
+.team-member:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+.team-member.reverse {
+  grid-template-columns: 1fr 300px;
+}
+
+.team-member.reverse .member-photo {
+  order: 2;
+}
+
+.team-member.reverse .member-info {
+  order: 1;
+}
+
+.member-photo {
+  position: relative;
+}
+
+.member-photo::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  right: 10px;
+  bottom: 10px;
+  background: linear-gradient(135deg, #4299e1 0%, #63b3ed 100%);
+  border-radius: 12px;
+  z-index: -1;
+}
+
+.profile-photo {
+  width: 100%;
+  height: 320px;
+  object-fit: cover;
+  border-radius: 8px;
+  display: block;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.member-info h2 {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 1.75rem;
+  color: #2c5282;
+  margin: 0 0 20px 0;
+  font-weight: 600;
+  position: relative;
+  display: inline-block;
+}
+
+.member-info h2::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(90deg, #4299e1 0%, #63b3ed 100%);
+  border-radius: 2px;
+}
+
+.member-info p {
+  font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 1.1rem;
+  line-height: 1.7;
+  color: #4a5568;
+  margin: 0;
+  font-weight: 400;
+}
+
+/* Closing Section */
+.closing-section {
+  max-width: 800px;
+  margin: 0 auto;
+  position: relative;
+}
+
+/* Services Overview Section */
+.services-overview {
+  max-width: 1000px;
+  margin: 0 auto 60px;
+  position: relative;
+}
+
+.services-overview h2 {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 2rem;
+  color: #2c5282;
+  text-align: center;
+  margin: 0 0 40px 0;
+  font-weight: 600;
+}
+
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 30px;
+}
+
+.service-item {
+  background: rgba(255, 255, 255, 0.95);
+  padding: 35px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border-top: 4px solid #4299e1;
+}
+
+.service-item:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+.service-item h3 {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 1.5rem;
+  color: #2c5282;
+  margin: 0 0 15px 0;
+  font-weight: 600;
+}
+
+.service-item p {
+  font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 1.05rem;
+  line-height: 1.7;
+  color: #4a5568;
+  margin: 0;
+  font-weight: 400;
+}
+
+.closing-section {
+  max-width: 800px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.closing-text {
+  font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 1.25rem;
+  line-height: 1.8;
+  color: #2d3748;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 35px 40px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border-left: 5px solid #63b3ed;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* Responsive Design */
+@media (max-width: 968px) {
+  .team-member,
+  .team-member.reverse {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+  
+  .team-member.reverse .member-photo {
+    order: 1;
+  }
+  
+  .team-member.reverse .member-info {
+    order: 2;
+  }
+  
+  .member-photo::before {
+    top: -8px;
+    left: -8px;
+    right: 8px;
+    bottom: 8px;
+  }
+  
+  .profile-photo {
+    height: 280px;
+  }
+}
+
+@media (max-width: 768px) {
+  .about-container {
+    padding: 30px 15px;
+  }
+  
+  .about-header h1 {
+    font-size: 2rem;
+  }
+  
+  .header-line {
+    width: 250px;
+  }
+  
+  .intro-text,
+  .closing-text {
+    font-size: 1.1rem;
+    padding: 25px 30px;
+  }
+  
+  .team-member {
+    padding: 30px 20px;
+  }
+  
+  .member-info h2 {
+    font-size: 1.5rem;
+  }
+  
+  .member-info p {
+    font-size: 1rem;
+  }
+  
+  .profile-photo {
+    height: 240px;
+  }
+  
+  .services-overview h2 {
+    font-size: 1.75rem;
+  }
+  
+  .services-grid {
+    grid-template-columns: 1fr;
+    gap: 25px;
+  }
+  
+  .service-item {
+    padding: 30px 25px;
+  }
+  
+  .service-item h3 {
+    font-size: 1.35rem;
+  }
+  
+  .service-item p {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .about-header h1 {
+    font-size: 1.75rem;
+  }
+  
+  .header-line {
+    width: 200px;
+  }
+  
+  .intro-text,
+  .closing-text {
+    font-size: 1rem;
+    padding: 20px 25px;
+  }
+  
+  .team-section {
+    gap: 35px;
+  }
+  
+  .team-member {
+    padding: 25px 15px;
+  }
+  
+  .member-info h2 {
+    font-size: 1.35rem;
+  }
+  
+  .profile-photo {
+    height: 220px;
+  }
+  
+  .services-overview {
+    margin-bottom: 50px;
+  }
+  
+  .services-overview h2 {
+    font-size: 1.5rem;
+    margin-bottom: 30px;
+  }
+  
+  .service-item {
+    padding: 25px 20px;
+  }
+  
+  .service-item h3 {
+    font-size: 1.25rem;
+  }
+}

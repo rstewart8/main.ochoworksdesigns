@@ -1,0 +1,357 @@
+<div class="plan-set-form-container">
+  <h2>{{ pageHeading }}</h2>
+
+  <form [formGroup]="planSetForm" (ngSubmit)="onSubmit()" class="plan-set-form">
+
+    <!-- Basic Information Section -->
+    <fieldset class="form-section">
+      <legend>Basic Information</legend>
+
+      <div *ngIf="isViewOrder()" class="form-group">
+        <label for="ordering">Order</label>
+        <input type="number" id="ordering" formControlName="ordering" class="form-control"
+          [class.is-invalid]="isFieldInvalid('ordering')" placeholder="Order" min="0" max="20">
+        <div class="invalid-feedback" *ngIf="isFieldInvalid('ordering')">
+          {{ getFieldError('ordering') }}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="title">Title</label>
+        <input type="text" id="title" formControlName="title" class="form-control"
+          [class.is-invalid]="isFieldInvalid('title')" placeholder="Enter plan title (optional)">
+        <div class="char-count">{{ getTitleCharCount() }}/128</div>
+        <div class="invalid-feedback" *ngIf="isFieldInvalid('title')">
+          {{ getFieldError('title') }}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="description">Description</label>
+        <textarea id="description" formControlName="description" class="form-control"
+          [class.is-invalid]="isFieldInvalid('description')" placeholder="Enter plan description (optional)"
+          rows="3"></textarea>
+        <div class="char-count">{{ getDescriptionCharCount() }}/256</div>
+        <div class="invalid-feedback" *ngIf="isFieldInvalid('description')">
+          {{ getFieldError('description') }}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="status">Status *</label>
+        <select id="status" formControlName="status" class="form-control" [class.is-invalid]="isFieldInvalid('status')">
+          <option *ngFor="let option of statusOptions" [value]="option.value">
+            {{ option.label }}
+          </option>
+        </select>
+        <div class="invalid-feedback" *ngIf="isFieldInvalid('status')">
+          {{ getFieldError('status') }}
+        </div>
+      </div>
+    </fieldset>
+
+    <!-- Admin Notes Section -->
+    <fieldset class="form-section">
+      <legend>Admin Notes</legend>
+
+      <div class="form-group">
+        <label for="notes">Notes (Admin Use)</label>
+        <textarea id="notes" formControlName="notes" class="form-control" [class.is-invalid]="isFieldInvalid('notes')"
+          placeholder="Enter admin notes (internal use only)" rows="4"></textarea>
+        <div class="char-count">{{ getNotesCharCount() }}/1000</div>
+        <div class="invalid-feedback" *ngIf="isFieldInvalid('notes')">
+          {{ getFieldError('notes') }}
+        </div>
+      </div>
+    </fieldset>
+
+    <!-- Room Details Section -->
+    <fieldset class="form-section">
+      <legend>Room Details</legend>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="bedrooms">Bedrooms</label>
+          <input type="number" id="bedrooms" formControlName="bedrooms" class="form-control"
+            [class.is-invalid]="isFieldInvalid('bedrooms')" placeholder="Number of bedrooms" min="1" max="10">
+          <div class="invalid-feedback" *ngIf="isFieldInvalid('bedrooms')">
+            {{ getFieldError('bedrooms') }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="bathrooms">Bathrooms</label>
+          <select id="bathrooms" formControlName="bathrooms" class="form-control">
+            <option value="">Select bathrooms</option>
+            <option *ngFor="let option of bathroomOptions" [value]="option.value">
+              {{ option.label }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="stories">Stories</label>
+          <select id="stories" formControlName="stories" class="form-control">
+            <option value="">Select stories</option>
+            <option *ngFor="let option of storyOptions" [value]="option.value">
+              {{ option.label }}
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="garage">Garage</label>
+          <select id="garage" formControlName="garage" class="form-control">
+            <option value="">Select garage</option>
+            <option *ngFor="let option of garageOptions" [value]="option.value">
+              {{ option.label }}
+            </option>
+          </select>
+        </div>
+      </div>
+    </fieldset>
+
+    <!-- Square Footage Section -->
+    <fieldset class="form-section">
+      <legend>Square Footage</legend>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="main_square_footage">Main Floor (sq ft)</label>
+          <input type="number" id="main_square_footage" formControlName="main_square_footage" class="form-control"
+            [class.is-invalid]="isFieldInvalid('main_square_footage')" placeholder="Main floor square footage" min="1">
+          <div class="invalid-feedback" *ngIf="isFieldInvalid('main_square_footage')">
+            {{ getFieldError('main_square_footage') }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="upper_square_footage">Upper Floor (sq ft)</label>
+          <input type="number" id="upper_square_footage" formControlName="upper_square_footage" class="form-control"
+            [class.is-invalid]="isFieldInvalid('upper_square_footage')" placeholder="Upper floor square footage"
+            min="0">
+          <div class="invalid-feedback" *ngIf="isFieldInvalid('upper_square_footage')">
+            {{ getFieldError('upper_square_footage') }}
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="basement_square_footage">Basement (sq ft)</label>
+        <input type="number" id="basement_square_footage" formControlName="basement_square_footage" class="form-control"
+          [class.is-invalid]="isFieldInvalid('basement_square_footage')" placeholder="Basement square footage" min="0">
+        <div class="invalid-feedback" *ngIf="isFieldInvalid('basement_square_footage')">
+          {{ getFieldError('basement_square_footage') }}
+        </div>
+      </div>
+    </fieldset>
+
+    <!-- Dimensions Section -->
+    <fieldset class="form-section">
+      <legend>Dimensions</legend>
+
+      <div class="form-row">
+        <div class="form-group dimension-group">
+          <label>Width</label>
+          <div class="dimension-inputs">
+            <div class="dimension-input">
+              <input type="number" formControlName="width_feet" class="form-control"
+                [class.is-invalid]="isFieldInvalid('width_feet')" placeholder="Feet" min="1">
+              <span class="input-label">ft</span>
+            </div>
+            <div class="dimension-input">
+              <select formControlName="width_inches" class="form-control">
+                <option *ngFor="let option of inchesOptions" [value]="option.value">
+                  {{ option.label }}
+                </option>
+              </select>
+              <span class="input-label">in</span>
+            </div>
+          </div>
+          <div class="invalid-feedback" *ngIf="isFieldInvalid('width_feet')">
+            {{ getFieldError('width_feet') }}
+          </div>
+        </div>
+
+        <div class="form-group dimension-group">
+          <label>Depth</label>
+          <div class="dimension-inputs">
+            <div class="dimension-input">
+              <input type="number" formControlName="depth_feet" class="form-control"
+                [class.is-invalid]="isFieldInvalid('depth_feet')" placeholder="Feet" min="1">
+              <span class="input-label">ft</span>
+            </div>
+            <div class="dimension-input">
+              <select formControlName="depth_inches" class="form-control">
+                <option *ngFor="let option of inchesOptions" [value]="option.value">
+                  {{ option.label }}
+                </option>
+              </select>
+              <span class="input-label">in</span>
+            </div>
+          </div>
+          <div class="invalid-feedback" *ngIf="isFieldInvalid('depth_feet')">
+            {{ getFieldError('depth_feet') }}
+          </div>
+        </div>
+      </div>
+    </fieldset>
+
+    <!-- Images Section -->
+    <fieldset class="form-section">
+      <legend>Images</legend>
+
+      <!-- Rendering Images Gallery -->
+      <div class="form-group">
+        <label class="gallery-label">
+          Rendering Images
+          <span class="image-count" *ngIf="hasImages('rendering')">({{ getImageCount('rendering') }})</span>
+        </label>
+
+        <!-- File Input for Adding Images -->
+        <div class="file-upload-section">
+          <input type="file" id="rendering" accept="image/*" class="form-control" multiple
+            (change)="onFileSelect($event, 'rendering')">
+          <div class="file-help">
+            Accepted formats: JPG, PNG, GIF (Max 10MB each) - Select multiple files to upload
+          </div>
+        </div>
+
+        <!-- Gallery Display -->
+        <div *ngIf="hasImages('rendering')" class="image-gallery">
+          <div *ngFor="let preview of getImagePreviews('rendering'); let i = index" class="gallery-item">
+            <div class="gallery-image-container">
+              <img [src]="preview.url" [alt]="preview.alt_text || 'Rendering image'" class="gallery-image">
+              <div class="gallery-overlay">
+                <button type="button" class="btn-remove-gallery"
+                  (click)="removeImageFromGallery(preview.id, 'rendering')" title="Remove image">
+                  ✕
+                </button>
+              </div>
+            </div>
+            <div class="gallery-item-info">
+              <span class="image-name" *ngIf="preview.file">{{ preview.file.name }}</span>
+              <!-- Only show alt text input for existing images (with database_id) -->
+              <div class="alt-text-input" *ngIf="preview.database_id">
+                <label [for]="'rendering-alt-' + i" class="alt-text-label">Alt Text:</label>
+                <textarea [id]="'rendering-alt-' + i" [value]="preview.alt_text || ''"
+                  (input)="updateAltText($event, preview)" class="form-control alt-text-field"
+                  placeholder="Describe this image for accessibility (optional)" maxlength="250" rows="2">
+                </textarea>
+                <div class="char-count">{{ getAltTextCharCount(preview.alt_text) }}/250</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Floor Plan Images Gallery -->
+      <div class="form-group">
+        <label class="gallery-label">
+          Floor Plan Images
+          <span class="image-count" *ngIf="hasImages('floor_plan')">({{ getImageCount('floor_plan') }})</span>
+        </label>
+
+        <!-- File Input for Adding Images -->
+        <div class="file-upload-section">
+          <input type="file" id="floor_plan" accept="image/*" class="form-control" multiple
+            (change)="onFileSelect($event, 'floor_plan')">
+          <div class="file-help">
+            Accepted formats: JPG, PNG, GIF (Max 10MB each) - Select multiple files to upload
+          </div>
+        </div>
+
+        <!-- Gallery Display -->
+        <div *ngIf="hasImages('floor_plan')" class="image-gallery">
+          <div *ngFor="let preview of getImagePreviews('floor_plan'); let i = index" class="gallery-item">
+            <div class="gallery-image-container">
+              <img [src]="preview.url" [alt]="preview.alt_text || 'Floor plan image'" class="gallery-image">
+              <div class="gallery-overlay">
+                <button type="button" class="btn-remove-gallery"
+                  (click)="removeImageFromGallery(preview.id, 'floor_plan')" title="Remove image">
+                  ✕
+                </button>
+              </div>
+            </div>
+            <div class="gallery-item-info">
+              <span class="image-name" *ngIf="preview.file">{{ preview.file.name }}</span>
+              <!-- Only show alt text input for existing images (with database_id) -->
+              <div class="alt-text-input" *ngIf="preview.database_id">
+                <label [for]="'floor-plan-alt-' + i" class="alt-text-label">Alt Text:</label>
+                <textarea [id]="'floor-plan-alt-' + i" [value]="preview.alt_text || ''"
+                  (input)="updateAltText($event, preview)" class="form-control alt-text-field"
+                  placeholder="Describe this floor plan for accessibility (optional)" maxlength="250" rows="2">
+                </textarea>
+                <div class="char-count">{{ getAltTextCharCount(preview.alt_text) }}/250</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gallery Images Gallery -->
+      <div class="form-group">
+        <label class="gallery-label">
+          Gallery Images
+          <span class="image-count" *ngIf="hasImages('gallery')">({{ getImageCount('gallery') }})</span>
+        </label>
+
+        <!-- File Input for Adding Images -->
+        <div class="file-upload-section">
+          <input type="file" id="gallery" accept="image/*" class="form-control" multiple
+            (change)="onFileSelect($event, 'gallery')">
+          <div class="file-help">
+            Accepted formats: JPG, PNG, GIF (Max 10MB each) - Select multiple files to upload
+          </div>
+        </div>
+
+        <!-- Gallery Display -->
+        <div *ngIf="hasImages('gallery')" class="image-gallery">
+          <div *ngFor="let preview of getImagePreviews('gallery'); let i = index" class="gallery-item">
+            <div class="gallery-image-container">
+              <img [src]="preview.url" [alt]="preview.alt_text || 'Gallery image'" class="gallery-image">
+              <div class="gallery-overlay">
+                <button type="button" class="btn-remove-gallery" (click)="removeImageFromGallery(preview.id, 'gallery')"
+                  title="Remove image">
+                  ✕
+                </button>
+              </div>
+            </div>
+            <div class="gallery-item-info">
+              <span class="image-name" *ngIf="preview.file">{{ preview.file.name }}</span>
+              <!-- Only show alt text input for existing images (with database_id) -->
+              <div class="alt-text-input" *ngIf="preview.database_id">
+                <label [for]="'gallery-alt-' + i" class="alt-text-label">Alt Text:</label>
+                <textarea [id]="'gallery-alt-' + i" [value]="preview.alt_text || ''"
+                  (input)="updateAltText($event, preview)" class="form-control alt-text-field"
+                  placeholder="Describe this image for accessibility (optional)" maxlength="250" rows="2">
+                </textarea>
+                <div class="char-count">{{ getAltTextCharCount(preview.alt_text) }}/250</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </fieldset>
+
+    <!-- Messages -->
+    <div *ngIf="submitMessage" class="message" [class.success]="submitMessage.includes('successfully')"
+      [class.error]="!submitMessage.includes('successfully')">
+      {{ submitMessage }}
+    </div>
+
+    <!-- Submit Section -->
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary" [disabled]="isLoading">
+        <span *ngIf="isLoading">Saving...</span>
+        <span *ngIf="!isLoading">Save Plan Set</span>
+      </button>
+
+      <button type="button" class="btn btn-secondary" (click)="resetFormAndPreviews()" [disabled]="isLoading">
+        Reset Form
+      </button>
+    </div>
+  </form>
+</div>

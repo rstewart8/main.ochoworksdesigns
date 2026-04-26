@@ -1,0 +1,314 @@
+<div class="dashboard-container">
+  <!-- Header -->
+  <div class="dashboard-header">
+    <div class="header-content">
+      <h1 class="page-title">Email Marketing Dashboard</h1>
+      <p class="page-subtitle">Monitor your email campaigns and subscriber engagement</p>
+    </div>
+    <div class="header-actions">
+      <a routerLink="/admin/marketing/campaigns/new" class="btn btn-primary">
+        <span class="btn-icon">+</span>
+        New Campaign
+      </a>
+      <a routerLink="/admin/marketing/contacts/new" class="btn btn-secondary">
+        <span class="btn-icon">+</span>
+        Add Contact
+      </a>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="loading-spinner"></div>
+    <p>Loading dashboard...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="error-container">
+    <div class="error-message">
+      <h3>Oops! Something went wrong</h3>
+      <p>{{ error }}</p>
+      <button class="btn btn-primary" (click)="loadStats()">Try Again</button>
+    </div>
+  </div>
+
+  <!-- Dashboard Content -->
+  <div *ngIf="!loading && !error && stats" class="dashboard-content">
+    
+    <!-- Stats Cards -->
+    <section class="stats-section">
+      <div class="stats-grid">
+        <!-- Total Contacts -->
+        <div class="stat-card">
+          <div class="stat-icon contacts-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+            </svg>
+          </div>
+          <div class="stat-content">
+            <span class="stat-value">{{ formatNumber(stats.contacts.total) }}</span>
+            <span class="stat-label">Total Contacts</span>
+            <span class="stat-detail">
+              <span class="stat-positive">{{ stats.contacts.subscribed }}</span> subscribed
+            </span>
+          </div>
+          <a routerLink="/admin/marketing/contacts" class="stat-link">View all →</a>
+        </div>
+
+        <!-- Subscribed -->
+        <div class="stat-card">
+          <div class="stat-icon subscribed-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+            </svg>
+          </div>
+          <div class="stat-content">
+            <span class="stat-value">{{ getSubscriptionRate() }}%</span>
+            <span class="stat-label">Subscription Rate</span>
+            <span class="stat-detail">
+              <span class="stat-new">+{{ stats.contacts.new_this_month }}</span> this month
+            </span>
+          </div>
+        </div>
+
+        <!-- Total Campaigns -->
+        <div class="stat-card">
+          <div class="stat-icon campaigns-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+            </svg>
+          </div>
+          <div class="stat-content">
+            <span class="stat-value">{{ stats.campaigns.total }}</span>
+            <span class="stat-label">Total Campaigns</span>
+            <span class="stat-detail">
+              <span class="stat-info">{{ stats.campaigns.sent }}</span> sent, 
+              <span class="stat-info">{{ stats.campaigns.draft }}</span> drafts
+            </span>
+          </div>
+          <a routerLink="/admin/marketing/campaigns" class="stat-link">View all →</a>
+        </div>
+
+        <!-- Open Rate -->
+        <div class="stat-card highlight">
+          <div class="stat-icon openrate-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+            </svg>
+          </div>
+          <div class="stat-content">
+            <span class="stat-value">{{ getOpenRate() }}%</span>
+            <span class="stat-label">Open Rate</span>
+            <span class="stat-detail">
+              {{ formatNumber(stats.emails.total_opened) }} of {{ formatNumber(stats.emails.total_sent) }} emails
+            </span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Follow-ups Section -->
+    <section class="followups-section" *ngIf="stats.followups && ((stats.overdue_followups && stats.overdue_followups.length > 0) || (stats.upcoming_followups && stats.upcoming_followups.length > 0))">
+      <div class="section-header">
+        <h2 class="section-title">Follow-ups</h2>
+        <div class="followup-summary">
+          <span class="summary-item overdue" *ngIf="stats.followups.overdue > 0">
+            {{ stats.followups.overdue }} overdue
+          </span>
+          <span class="summary-item upcoming" *ngIf="stats.followups.upcoming > 0">
+            {{ stats.followups.upcoming }} this week
+          </span>
+          <span class="summary-item completed">
+            {{ getFollowUpCompletionRate() }}% completion rate
+          </span>
+        </div>
+      </div>
+
+      <div class="followups-grid">
+        <!-- Overdue Follow-ups -->
+        <div class="followups-column" *ngIf="stats.overdue_followups && stats.overdue_followups.length > 0">
+          <div class="column-header overdue">
+            <h3>🔴 Overdue - Last 30 Days ({{ stats.overdue_followups.length }})</h3>
+          </div>
+          <div class="followups-list">
+            <a 
+              *ngFor="let followup of stats.overdue_followups; trackBy: trackByFollowUpFn" 
+              [routerLink]="['/admin/marketing/contacts', followup.contact_id]"
+              class="followup-item overdue"
+            >
+              <div class="followup-contact">
+                <span class="contact-name">{{ getContactDisplayName(followup) }}</span>
+                <span class="contact-company" *ngIf="followup.company">{{ followup.company }}</span>
+              </div>
+              <div class="followup-details">
+                <span class="followup-date">📅 {{ followup.follow_up_date | date:'MMM d' }}</span>
+                <span class="followup-days urgent">{{ getDaysText(followup) }}</span>
+              </div>
+              <div class="followup-notes" *ngIf="followup.follow_up_notes">
+                {{ followup.follow_up_notes }}
+              </div>
+            </a>
+            <div class="view-all" *ngIf="stats.followups.overdue > stats.overdue_followups.length">
+              <a routerLink="/admin/marketing/contacts" [queryParams]="{filter: 'overdue_followup'}">
+                View all {{ stats.followups.overdue }} overdue follow-ups →
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Upcoming Follow-ups -->
+        <div class="followups-column" *ngIf="stats.upcoming_followups && stats.upcoming_followups.length > 0">
+          <div class="column-header upcoming">
+            <h3>📅 Upcoming ({{ stats.upcoming_followups.length }})</h3>
+          </div>
+          <div class="followups-list">
+            <a 
+              *ngFor="let followup of stats.upcoming_followups; trackBy: trackByFollowUpFn" 
+              [routerLink]="['/admin/marketing/contacts', followup.contact_id]"
+              class="followup-item"
+              [ngClass]="getUrgencyClass(followup.days_until)"
+            >
+              <div class="followup-contact">
+                <span class="contact-name">{{ getContactDisplayName(followup) }}</span>
+                <span class="contact-company" *ngIf="followup.company">{{ followup.company }}</span>
+              </div>
+              <div class="followup-details">
+                <span class="followup-date">📅 {{ followup.follow_up_date | date:'MMM d' }}</span>
+                <span class="followup-days" [ngClass]="getUrgencyClass(followup.days_until)">
+                  {{ getDaysText(followup) }}
+                </span>
+              </div>
+              <div class="followup-notes" *ngIf="followup.follow_up_notes">
+                {{ followup.follow_up_notes }}
+              </div>
+            </a>
+            <div class="view-all" *ngIf="stats.followups.upcoming > stats.upcoming_followups.length">
+              <a routerLink="/admin/marketing/contacts" [queryParams]="{filter: 'upcoming_followup'}">
+                View all {{ stats.followups.upcoming }} upcoming follow-ups →
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Two Column Layout -->
+    <div class="dashboard-columns">
+      
+      <!-- Recent Activity Chart -->
+      <section class="activity-section">
+        <div class="section-header">
+          <h2 class="section-title">Recent Activity</h2>
+          <span class="section-subtitle">Last 30 days</span>
+        </div>
+        
+        <div class="activity-chart" *ngIf="stats.recent_activity && stats.recent_activity.length > 0">
+          <div class="chart-legend">
+            <span class="legend-item">
+              <span class="legend-dot sent"></span> Sent
+            </span>
+            <span class="legend-item">
+              <span class="legend-dot opened"></span> Opened
+            </span>
+          </div>
+          
+          <div class="chart-container">
+            <div class="chart-bars">
+              <div 
+                *ngFor="let activity of stats.recent_activity; let i = index; trackBy: trackByActivityFn" 
+                class="bar-group"
+                [title]="activity.date + ': ' + activity.sent + ' sent, ' + activity.opened + ' opened'"
+              >
+                <div class="bar sent-bar" [style.height.%]="getBarHeight(activity.sent)"></div>
+                <div class="bar opened-bar" [style.height.%]="getBarHeight(activity.opened)"></div>
+                <span class="bar-label" *ngIf="i % 5 === 0">{{ formatChartDate(activity.date) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="no-data" *ngIf="!stats.recent_activity || stats.recent_activity.length === 0">
+          <p>No activity data available yet.</p>
+          <p class="no-data-hint">Send your first campaign to see activity here.</p>
+        </div>
+      </section>
+
+      <!-- Top Campaigns -->
+      <section class="top-campaigns-section">
+        <div class="section-header">
+          <h2 class="section-title">Top Performing Campaigns</h2>
+          <a routerLink="/admin/marketing/campaigns" class="section-link">View all</a>
+        </div>
+
+        <div class="campaigns-list" *ngIf="stats.top_campaigns && stats.top_campaigns.length > 0">
+          <div 
+            *ngFor="let campaign of stats.top_campaigns; trackBy: trackByCampaignFn" 
+            class="campaign-item"
+            [routerLink]="['/admin/marketing/campaigns', campaign.id, 'stats']"
+          >
+            <div class="campaign-info">
+              <h4 class="campaign-name">{{ campaign.name }}</h4>
+              <p class="campaign-subject">{{ campaign.subject }}</p>
+            </div>
+            <div class="campaign-stats">
+              <span class="campaign-open-rate">{{ campaign.open_rate }}%</span>
+              <span class="campaign-stat-label">open rate</span>
+            </div>
+            <div class="campaign-meta">
+              <span class="campaign-sent">{{ campaign.total_sent }} sent</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="no-data" *ngIf="!stats.top_campaigns || stats.top_campaigns.length === 0">
+          <p>No campaigns sent yet.</p>
+          <a routerLink="/admin/marketing/campaigns/new" class="btn btn-small">Create your first campaign</a>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- Quick Actions -->
+    <section class="quick-actions-section">
+      <h2 class="section-title">Quick Actions</h2>
+      <div class="actions-grid">
+        <a routerLink="/admin/marketing/contacts" class="action-card">
+          <div class="action-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+            </svg>
+          </div>
+          <span class="action-label">Manage Contacts</span>
+        </a>
+
+        <a routerLink="/admin/marketing/contacts/import" class="action-card">
+          <div class="action-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/>
+            </svg>
+          </div>
+          <span class="action-label">Import Contacts</span>
+        </a>
+
+        <a routerLink="/admin/marketing/campaigns" class="action-card">
+          <div class="action-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+            </svg>
+          </div>
+          <span class="action-label">View Campaigns</span>
+        </a>
+
+        <a routerLink="/admin/marketing/campaigns/new" class="action-card highlight">
+          <div class="action-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+            </svg>
+          </div>
+          <span class="action-label">New Campaign</span>
+        </a>
+      </div>
+    </section>
+
+  </div>
+</div>
