@@ -1,0 +1,12 @@
+.DS_Store
+
+mysql-data/
+var/
+
+api.ochoworksdesigns/.env
+api.ochoworksdesigns/.cron-env
+api.ochoworksdesigns/logs/
+
+web.ochoworksdesigns/.angular/
+web.ochoworksdesigns/dist/
+web.ochoworksdesigns/node_modules/

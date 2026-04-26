@@ -1,0 +1,77 @@
+services:
+  db:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ochoworksdesigns
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: admin_password
+      MYSQL_ROOT_PASSWORD: rootpassword
+    ports:
+      - "3622:3306"
+    volumes:
+      - ./mysql-data:/var/lib/mysql
+      - ./api.ochoworksdesigns/sqls/dumps/backup.sql:/docker-entrypoint-initdb.d/backup.sql:ro
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "127.0.0.1",
+          "-uroot",
+          "-prootpassword"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  api:
+    build:
+      context: ./api.ochoworksdesigns
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./api.ochoworksdesigns:/var/www/html
+      - ./var/log/ochoworksdesigns:/var/log/ochoworksdesigns
+    ports:
+      - "8222:80"
+    environment:
+      APACHE_DOCUMENT_ROOT: /var/www/html/public
+
+  cron:
+    build:
+      context: ./api.ochoworksdesigns
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      api:
+        condition: service_started
+    volumes:
+      - ./api.ochoworksdesigns:/var/www/html
+      - ./crontab.txt:/etc/cron.d/main-ochoworksdesigns:ro
+      - ./var/log/ochoworksdesigns:/var/log/ochoworksdesigns
+    command: ["/bin/sh", "/var/www/html/start-cron.sh"]
+
+  frontend:
+    build:
+      context: ./web.ochoworksdesigns
+      dockerfile: Dockerfile.dev
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_started
+    working_dir: /app
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+      WATCHPACK_POLLING: "true"
+    volumes:
+      - ./web.ochoworksdesigns:/app
+      - /app/node_modules
+    ports:
+      - "4222:4222"
+    command: ["npm", "run", "start", "--", "--host", "0.0.0.0", "--port", "4222", "--poll", "2000"]

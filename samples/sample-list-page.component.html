@@ -1,0 +1,108 @@
+<section class="page-header">
+  <div>
+    <p class="eyebrow">Contacts</p>
+    <h1>Compact pipeline view</h1>
+    <p class="subcopy">
+      Search companies, open a detail view, and keep the active sequence visible without wasting space.
+    </p>
+  </div>
+  <a class="button primary" routerLink="/contacts/new">New contact</a>
+</section>
+
+<section class="panel filters">
+  <label class="field search">
+    <span>Search</span>
+    <input
+      [(ngModel)]="search"
+      (keyup.enter)="applyFilters()"
+      type="text"
+      placeholder="Company, name, email, phone"
+    />
+  </label>
+
+  <label class="field">
+    <span>City</span>
+    <select [(ngModel)]="selectedCity" (change)="applyFilters()">
+      <option value="">All cities</option>
+      <option *ngFor="let city of metadata?.filter_cities" [value]="city">{{ city }}</option>
+    </select>
+  </label>
+
+  <label class="field">
+    <span>State</span>
+    <select [(ngModel)]="selectedState" (change)="applyFilters()">
+      <option value="">All states</option>
+      <option *ngFor="let state of metadata?.filter_states" [value]="state">{{ state }}</option>
+    </select>
+  </label>
+
+  <label class="field page-size">
+    <span>Rows</span>
+    <select [(ngModel)]="pageSize" (change)="applyFilters()">
+      <option [ngValue]="10">10</option>
+      <option [ngValue]="20">20</option>
+      <option [ngValue]="30">30</option>
+      <option [ngValue]="50">50</option>
+    </select>
+  </label>
+
+  <div class="filter-actions">
+    <button class="button primary" type="button" (click)="applyFilters()">Apply</button>
+    <button class="button subtle" type="button" (click)="clearFilters()">Clear</button>
+  </div>
+</section>
+
+<section class="panel table-shell">
+  <div class="table-meta" *ngIf="data">
+    <strong>{{ data.pagination.total }}</strong>
+    <span>contacts found</span>
+  </div>
+
+  <p class="feedback error" *ngIf="errorMessage">{{ errorMessage }}</p>
+  <p class="feedback muted" *ngIf="isLoading">Loading contacts…</p>
+
+  <div class="empty-state" *ngIf="!isLoading && data && data.items.length === 0">
+    <h2>No contacts matched</h2>
+    <p>Try a broader search or add your first contact.</p>
+    <a class="button primary" routerLink="/contacts/new">Create contact</a>
+  </div>
+
+  <table *ngIf="!isLoading && data && data.items.length" class="compact-table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Company</th>
+        <th>Primary</th>
+        <th>Email</th>
+        <th>Phone</th>
+        <th>Location</th>
+        <th>Status</th>
+        <th>Sequence</th>
+        <th>Last activity</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let contact of data.items">
+        <td>{{ contact.id }}</td>
+        <td>
+          <a [routerLink]="['/contacts', contact.id]">{{ contact.company_name }}</a>
+        </td>
+        <td>{{ contact.primary_contact_name }}</td>
+        <td>{{ contact.email || '—' }}</td>
+        <td>{{ formatPhone(contact.phone) }}</td>
+        <td>{{ contact.city_state }}</td>
+        <td>
+          <span class="badge">{{ contact.lead_status.replace('_', ' ') }}</span>
+        </td>
+        <td>{{ contact.active_sequence || '—' }}</td>
+        <td>{{ contact.last_activity_at ? (contact.last_activity_at | date:'MMM d, y h:mm a') : '—' }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="pagination" *ngIf="data">
+    <button class="button subtle" type="button" (click)="goToPage(page - 1)">Previous</button>
+    <span>Page {{ data.pagination.page }} of {{ data.pagination.total_pages }}</span>
+    <button class="button subtle" type="button" (click)="goToPage(page + 1)">Next</button>
+  </div>
+</section>

@@ -1,0 +1,4 @@
+SHELL=/bin/sh
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+* * * * * root cd /var/www/html && /usr/local/bin/php process_campaign_send_queue.php --max=5 >> /var/log/ochoworksdesigns/campaign-queue.log 2>&1

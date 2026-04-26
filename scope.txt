@@ -1,0 +1,95 @@
+main.ochoworksdesigns scope
+
+This file is the implementation source of truth for the application build.
+Update it as requirements, constraints, and build decisions evolve so the application can be recreated from repository documentation alone.
+
+Current repository state
+
+This repository now includes a generated first-pass Angular, PHP, Docker, Nginx, and cron scaffold based on this scope.
+The scope remains the source of truth, and any gaps between implementation and scope should be reconciled in future build passes.
+Initialize git before implementation work begins so setup, scaffolding, and milestone commits are tracked from the start.
+
+Application summary
+
+- Application name: main.ochoworksdesigns
+- Business context: OchoWorks Designs and Drafting
+- See OchoWorks Designs Business Model.txt file for reference.  This application is main website for OchoWorks Designs and Drafting
+
+Primary stack
+
+- Angular standalone frontend
+- PHP backend
+- MySQL 8 database
+- Nginx
+- Cron-based background processing
+- Docker Compose for local development
+
+General product direction
+
+- Keep the UI compact and operational rather than presentation-heavy.
+- Prefer searchable lists and tables over large card layouts.
+- Use pagination anywhere record counts can grow.
+- Optimize for quick daily follow-up workflows.
+- Keep the first build intentionally narrow and easy to reason about.
+- Use the UI sample files in `samples/` as styling direction for density, spacing, and tone.
+- In the Angular app, place each page component in its own folder under `src/app/pages/<page-name>`.
+- Use `git init` at project start if the repository has not already been initialized, and create an initial commit before major scaffolding work begins.
+
+Infrastructure and operational requirements
+
+- Docker Compose must expose MySQL on host port 3611 for direct host access
+- inside the Docker network, MySQL should still listen on port 3306
+- when Docker is running, Angular must run in development mode with live reload enabled
+- bind-mount the local Angular source into the frontend container
+- the Angular dev server should listen on `0.0.0.0`
+- enable polling-based file watching if needed for reliable live reload in Docker
+- frontend edits should not require restarting the full stack
+- `./start.sh` should echo the relevant application URLs after services are ready
+
+Logging requirements
+
+Every relevant application log line must include a `session_id` so logs can be correlated across API requests, cron jobs, and errors.
+
+Log the following at minimum:
+
+- request start and request completion
+- validation failures
+- contact create, update, and delete attempts and outcomes
+- uniqueness conflicts for email and phone
+- status updates
+- communication creation and edits
+- task creation and completion
+- queued email state changes and send outcomes
+- template create, update, and delete events
+- pipeline assignment and progression
+- cron job execution, skips, and failures
+- unexpected exceptions
+
+Log fields should include when available:
+
+- timestamp
+- level
+- service name
+- session_id
+- contact id
+- communication id
+- task id
+- queued email id
+- pipeline enrollment id
+- message
+
+Container log path requirements
+
+- inside containers, write application logs to `/var/log/clientochoworksdesigns/`
+- bind-mount that container path to `./var/log/clientochoworksdesigns/` in the project root
+- keep API, cron, and any relevant app logs in that shared directory structure
+- store cron task log output in separate files for email and pipeline runs so operators can monitor results easily
+
+
+
+
+Definition of done for this phase
+
+- queued emails support `pending` to `ready` to cron-sent processing
+- relevant business activity and operational logs include `session_id`
+- Docker development runs with Angular live reload, correct URL output from `./start.sh`, and logs written to the required mounted directory
