@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">Owner-builder home plans image placeholder</title>
+  <desc id="desc">Placeholder for owner-builder planning and construction documentation.</desc>
+  <rect width="1200" height="760" fill="#f1f6f3"/>
+  <rect x="210" y="170" width="780" height="410" rx="24" fill="#ffffff" stroke="#2c5282" stroke-width="16"/>
+  <path d="M330 470h540M330 390h380M330 310h540" stroke="#81c7d4" stroke-width="24" stroke-linecap="round"/>
+  <circle cx="810" cy="390" r="74" fill="#e7f5f8" stroke="#2c5282" stroke-width="14"/>
+  <path d="M775 390l24 24 48-56" fill="none" stroke="#2c5282" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="600" y="675" text-anchor="middle" fill="#2c5282" font-family="Arial, sans-serif" font-size="44" font-weight="700">Owner-Builder Plans Image</text>
+</svg>

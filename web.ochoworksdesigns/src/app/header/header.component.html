@@ -35,21 +35,33 @@
           </a>
         </li>
         <li class="nav-item" role="none">
-          <a routerLink="/about" routerLinkActive="active" class="nav-link" (click)="onNavClick('about')"
+          <a routerLink="/custom-home-design" routerLinkActive="active" class="nav-link" (click)="onNavClick('custom-home-design')"
             role="menuitem">
-            About
+            Custom Design
           </a>
         </li>
         <li class="nav-item" role="none">
-          <a routerLink="/home-builders" routerLinkActive="active" class="nav-link" (click)="onNavClick('builders')"
+          <a routerLink="/future-homeowners" routerLinkActive="active" class="nav-link" (click)="onNavClick('future-homeowners')"
             role="menuitem">
-            Home Builders
+            Future Homeowners
+          </a>
+        </li>
+        <li class="nav-item" role="none">
+          <a routerLink="/general-contractors-developers" routerLinkActive="active" class="nav-link" (click)="onNavClick('general-contractors-developers')"
+            role="menuitem">
+            General Contractors - Developers
           </a>
         </li>
         <li class="nav-item" role="none">
           <a routerLink="/plans" routerLinkActive="active" class="nav-link" (click)="onNavClick('plans')"
             role="menuitem">
             Featured Plans
+          </a>
+        </li>
+        <li class="nav-item" role="none">
+          <a routerLink="/house-plan-styles" routerLinkActive="active" class="nav-link" (click)="onNavClick('plan-styles')"
+            role="menuitem">
+            Styles
           </a>
         </li>
 
@@ -74,6 +86,13 @@
         <li *ngIf="isAdmin()" class="nav-item" role="none">
           <a [routerLink]="['/admin/marketing']" routerLinkActive="active" class="nav-link admin-link" role="menuitem">
             📧 Marketing
+          </a>
+        </li>
+
+        <li class="nav-item" role="none">
+          <a routerLink="/about" routerLinkActive="active" class="nav-link" (click)="onNavClick('about')"
+            role="menuitem">
+            About
           </a>
         </li>
 

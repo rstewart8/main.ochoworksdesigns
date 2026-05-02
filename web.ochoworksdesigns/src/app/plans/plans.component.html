@@ -2,7 +2,7 @@
   <!-- Page Header -->
   <div class="plans-header">
     <h1 class="page-title">House Plans</h1>
-    <p class="page-subtitle">Discover your perfect home from our collection of professionally designed house plans</p>
+    <p class="page-subtitle">Browse professionally drafted house plans ready for pricing, modification, and construction planning</p>
   </div>
 
   <!-- Admin Status Filter -->
@@ -65,7 +65,7 @@
           <!-- Rendering Images -->
           <div class="plan-image-wrapper" *ngIf="hasImagesOfType(plan, 'rendering')">
             <div class="image-type-header">
-              <h1 class="image-type-title">Views</h1>
+              <h2 class="image-type-title">Views</h2>
               <span class="image-counter" *ngIf="shouldShowNavigation(plan, 'rendering')">
                 {{ getImageIndexDisplay(plan, 'rendering') }}
               </span>
@@ -103,7 +103,7 @@
           <!-- Floor Plan Images -->
           <div class="plan-image-wrapper" *ngIf="hasImagesOfType(plan, 'floor_plan')">
             <div class="image-type-header"> 
-              <h1 class="image-type-title">Floor Plans</h1>
+              <h2 class="image-type-title">Floor Plans</h2>
               <span class="image-counter" *ngIf="shouldShowNavigation(plan, 'floor_plan')">
                 {{ getImageIndexDisplay(plan, 'floor_plan') }}
               </span>
@@ -165,10 +165,10 @@
 
           <!-- Plan Actions -->
           <div class="plan-actions">
-            <button class="action-btn primary" [routerLink]="['/plan', plan.id]">
+            <button class="action-btn primary" [routerLink]="['/plan', plan.id]" (click)="trackPlanInterest(plan)">
               View Plan
             </button>
-            <button class="action-btn secondary" [routerLink]="['/contact']" [queryParams]="{plan: plan.plan_no}">
+            <button class="action-btn secondary" [routerLink]="['/contact']" [queryParams]="{plan: plan.plan_no}" (click)="trackPlanInterest(plan)">
               Get Quote
             </button>
           </div>

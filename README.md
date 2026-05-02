@@ -81,3 +81,13 @@ That reset is only needed when the initial schema load is interrupted, because M
 - The Angular dev server is bind-mounted, so frontend edits should hot reload without restarting the stack.
 - The PHP API is bind-mounted too, so PHP file changes are picked up immediately.
 - The root setup leaves the existing nested app directories intact and only adds the repo-level Docker entry points around them.
+
+## Production Deploy
+
+Production deployment now runs from the repo root:
+
+```bash
+./deploy.sh -b master
+```
+
+See `aws-ec2-production-setup.txt` for the EC2 layout, Nginx setup, and API `.env` values. The root deploy builds the Angular SSR app, reloads PM2, and runs the PHP API plus cron worker through `docker-compose.production.yml`.

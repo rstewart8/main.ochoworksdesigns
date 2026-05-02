@@ -1,0 +1,33 @@
+services:
+  api:
+    build:
+      context: ./api.ochoworksdesigns
+    image: main-ochoworksdesigns-api
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8888:80"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./api.ochoworksdesigns/.env:/var/www/html/.env:ro
+      - ./api.ochoworksdesigns/files:/var/www/html/files
+      - ./var/log/ochoworksdesigns:/var/log/ochoworksdesigns
+      - ./web.ochoworksdesigns/public:/var/www/web/public
+    environment:
+      APACHE_DOCUMENT_ROOT: /var/www/html/public
+
+  cron:
+    image: main-ochoworksdesigns-api
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_started
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./api.ochoworksdesigns/.env:/var/www/html/.env:ro
+      - ./api.ochoworksdesigns/files:/var/www/html/files
+      - ./crontab.txt:/etc/cron.d/main-ochoworksdesigns:ro
+      - ./var/log/ochoworksdesigns:/var/log/ochoworksdesigns
+      - ./web.ochoworksdesigns/public:/var/www/web/public
+    command: ["/bin/sh", "/var/www/html/start-cron.sh"]

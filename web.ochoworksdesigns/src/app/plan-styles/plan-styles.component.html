@@ -1,0 +1,38 @@
+<main class="landing-page">
+  <section class="landing-hero">
+    <div class="hero-copy">
+      <p class="eyebrow">House plan styles</p>
+      <h1>Find The Right Style For Your Home Plan</h1>
+      <p class="hero-text">From modern farmhouse and craftsman to ranch, mountain homes, basement plans, and large-garage layouts, OchoWorks Designs helps shape a home plan around the way you want to live and build.</p>
+      <div class="hero-actions">
+        <a routerLink="/plans" class="primary-action">Browse Featured Plans</a>
+        <a routerLink="/custom-home-design" class="secondary-action">Start A Custom Design</a>
+      </div>
+    </div>
+    <img src="assets/images/featured-plans/santa-fe-plan-1080.jpg" alt="Featured OchoWorks Designs Santa Fe style home plan rendering" class="hero-image">
+  </section>
+
+  <section class="content-band">
+    <h2>Popular Plan Categories</h2>
+    <p>Use these categories as a starting point for featured plans, plan modifications, or a fully custom design.</p>
+    <div class="feature-grid">
+      <article *ngFor="let style of styles">
+        <h3>{{ style }}</h3>
+        <p>Explore design ideas and plan options for {{ style.toLowerCase() }} homes.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="split-section">
+    <div>
+      <h2>Style Is Only One Part Of A Buildable Plan</h2>
+      <p>The right plan also needs to account for lot conditions, structure, budget, daily routines, storage, garage needs, and long-term livability.</p>
+    </div>
+    <ul class="check-list">
+      <li>Choose a featured plan and modify it</li>
+      <li>Start from a style you already love</li>
+      <li>Design around a lot or view</li>
+      <li>Adapt for contractors, homeowners, and permitting</li>
+    </ul>
+  </section>
+</main>

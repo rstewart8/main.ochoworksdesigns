@@ -3,6 +3,8 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { PlanService, HousePlan, PlanImage, ApiResponse } from '../_services/plan.service';
 import { AuthService } from '../_services/auth.service';
+import { SEOService } from '../_services/seo.service';
+import { AnalyticsService } from '../_services/google-analytics.service';
 
 @Component({
   selector: 'app-plans',
@@ -46,15 +48,40 @@ export class PlansComponent implements OnInit, OnDestroy {
   constructor(
     private planService: PlanService,
     private authService: AuthService,
+    private seoService: SEOService,
+    private analytics: AnalyticsService,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {
     this.isBrowser = isPlatformBrowser(this.platformId);
   }
 
   ngOnInit(): void {
+    this.updateSEO();
     this.setupKeyboardListeners();
     this.setupClickOutsideListener();
     this.loadPlans();
+  }
+
+  private updateSEO(): void {
+    this.seoService.updateSEO({
+      title: 'Featured House Plans',
+      description: 'Browse featured OchoWorks Designs house plans with renderings, floor plans, specifications, and quote requests for custom home design projects.',
+      image: '/assets/images/featured-plans/modern-farmhouse-plan-1075.jpg',
+      url: 'https://ochoworksdesigns.com/plans',
+      type: 'website',
+      schema: {
+        '@context': 'https://schema.org',
+        '@type': 'CollectionPage',
+        name: 'Featured House Plans',
+        url: 'https://ochoworksdesigns.com/plans',
+        description: 'Featured house plans and custom home design options from OchoWorks Designs.',
+        isPartOf: {
+          '@type': 'WebSite',
+          name: 'OchoWorks Designs',
+          url: 'https://ochoworksdesigns.com'
+        }
+      }
+    });
   }
 
   isAdmin(): boolean {
@@ -346,6 +373,10 @@ export class PlansComponent implements OnInit, OnDestroy {
     if (this.isBrowser) {
       document.body.style.overflow = 'hidden';
     }
+  }
+
+  trackPlanInterest(plan: HousePlan): void {
+    this.analytics.trackPlanSelect(plan.plan_no || plan.title);
   }
 
   /**
