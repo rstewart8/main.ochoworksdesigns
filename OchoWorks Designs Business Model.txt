@@ -5,19 +5,16 @@ ________________
 
 
 Our Mission
-We partner with homeowners, builders, and contractors to deliver professionally designed, ready-to-build home plans that turn dream homes into achievable construction projects. Our comprehensive approach ensures every detail is considered from initial concept to final blueprint.
+We partner with future homeowners, general contractors, and developers to deliver professionally designed, ready-to-build home plans that turn dream homes and residential projects into achievable construction work. Our comprehensive approach ensures every detail is considered from initial concept to final blueprint.
 ________________
 
 
 Who We Serve
-* Owner-Builders
- Self-motivated homeowners taking control of their construction journey receive detailed, builder-friendly plans that guide them through every phase of construction.
+* Future Homeowners
+ People planning to build their own home receive detailed, construction-ready plans they can use to manage their own build or take to a general contractor for pricing, permitting, and construction. Whether they have already purchased a lot, are evaluating land, are working from sketches, or have preliminary ideas, we create custom architectural solutions tailored to their property, lifestyle, and goals.
 
-* Home Buyers & Future Homeowners
- Whether you’ve already purchased a lot or are working with a builder who provides one, we create custom architectural solutions tailored to your property, lifestyle, and goals. We also collaborate with clients who bring their own ideas or preliminary plans and refine them into complete, construction-ready blueprints.
-
-* Home Builders & Contractors
- Construction professionals gain access to complete plan sets that streamline the building process and ensure project success.
+* General Contractors & Developers
+ Construction professionals, general contractors, and residential developers gain access to complete plan sets that streamline client builds, spec homes, and development projects while helping reduce delays caused by unclear or incomplete plans.
 
 ________________
 
@@ -102,13 +99,12 @@ The main purpose for the website blog page is for marketing purposes.  I needs t
 Core Blog Definition Values for OchoWorks Designs
 Title & Slug: These should focus on architectural keywords and home design terms. For example, "Modern Farmhouse Plan with Open Concept Living" with slug "modern-farmhouse-open-concept-plan".
 Content & SEO Optimization: Given that your blog's main purpose is marketing and driving site visitors, your content should target:
-      * Home design keywords ("custom home plans," "architectural designs," "builder-friendly blueprints")
+      * Home design keywords ("custom home plans," "architectural designs," "contractor-friendly blueprints")
       * Location-based terms if targeting specific markets
       * Design style keywords ("modern farmhouse," "contemporary," "traditional")
 Categories: Based on your business, consider categories like:
-      * Owner-Builders: DIY construction guidance and detailed plan explanations for self-motivated homeowners
-      * Home Buyers: Design inspiration, lot optimization, and custom solutions for future homeowners
-      * Builders & Contractors: Technical specifications and construction efficiency tips for construction professionals
+      * Future Homeowners: Plan guidance for people preparing to build their own home or take plans to a contractor
+      * General Contractors & Developers: Technical specifications and construction efficiency tips for construction professionals
       * Custom Designs: Unique architectural solutions tailored to specific client needs
       * Stock Plans: Our collection of ready-to-build home designs
       * Plan Modifications: Adaptations and refinements of existing designs

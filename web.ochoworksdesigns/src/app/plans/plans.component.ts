@@ -66,7 +66,7 @@ export class PlansComponent implements OnInit, OnDestroy {
     this.seoService.updateSEO({
       title: 'Featured House Plans',
       description: 'Browse featured OchoWorks Designs house plans with renderings, floor plans, specifications, and quote requests for custom home design projects.',
-      image: '/assets/images/plan-1.jpeg',
+      image: '/assets/images/featured-plans/modern-farmhouse-plan-1075.jpg',
       url: 'https://ochoworksdesigns.com/plans',
       type: 'website',
       schema: {

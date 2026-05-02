@@ -19,7 +19,7 @@ export class LoginComponent implements OnInit {
   showPassword = false;
   errorMessage = '';
   successMessage = '';
-  readonly devLoginCredentials = environment.devLoginCredentials;
+  readonly devLoginCredentials: { email: string; password: string } | null = environment.devLoginCredentials;
 
   private fb = inject(FormBuilder);
   private router = inject(Router);

@@ -46,7 +46,7 @@ export class ContactComponent implements OnInit {
   ngOnInit(): void {
     this.seoService.updateSEO({
       title: 'Contact OchoWorks Designs',
-      description: 'Contact OchoWorks Designs to start a custom home plan, request a quote, or discuss drafting services for homeowners, builders, and contractors.',
+      description: 'Contact OchoWorks Designs to start a custom home plan, request a quote, or discuss drafting services for future homeowners, general contractors, and developers.',
       image: '/assets/images/8-logo.png',
       url: 'https://ochoworksdesigns.com/contact',
       type: 'website',
@@ -58,7 +58,7 @@ export class ContactComponent implements OnInit {
         image: 'https://ochoworksdesigns.com/assets/images/8-logo.png',
         telephone: '+1-435-680-1097',
         email: 'randy@ochoworksdesigns.com',
-        description: 'Custom home design and residential drafting services for homeowners, builders, and contractors.',
+        description: 'Custom home design and residential drafting services for future homeowners, general contractors, and developers.',
         sameAs: [
           'https://www.facebook.com/OchoWorksDesigns',
           'https://www.instagram.com/ochoworksdesigns/',

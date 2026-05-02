@@ -14,8 +14,8 @@ export class HomeComponent implements OnInit {
   ngOnInit(): void {
     this.seoService.updateSEO({
       title: 'Custom Home Design & Drafting Services',
-      description: 'OchoWorks Designs creates custom home plans, featured house plans, and construction-ready drafting packages for homeowners, builders, and contractors.',
-      image: '/assets/images/custom-home-rendering-2.jpg',
+      description: 'OchoWorks Designs creates custom home plans, featured house plans, and construction-ready drafting packages for future homeowners, general contractors, and developers.',
+      image: '/assets/images/featured-plans/modern-farmhouse-plan-1075.jpg',
       url: 'https://ochoworksdesigns.com/home',
       type: 'website',
       schema: {
@@ -23,7 +23,7 @@ export class HomeComponent implements OnInit {
         '@type': 'WebSite',
         name: 'OchoWorks Designs',
         url: 'https://ochoworksdesigns.com',
-        description: 'Custom home design and drafting services for homeowners, builders, and contractors.',
+        description: 'Custom home design and drafting services for future homeowners, general contractors, and developers.',
         publisher: {
           '@type': 'Organization',
           name: 'OchoWorks Designs',

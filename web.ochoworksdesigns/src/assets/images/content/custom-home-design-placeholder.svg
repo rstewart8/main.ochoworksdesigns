@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">Custom home design image placeholder</title>
+  <desc id="desc">Placeholder for a custom home design rendering.</desc>
+  <rect width="1200" height="760" fill="#eef4f7"/>
+  <path d="M170 560h860V342L600 170 170 342z" fill="#ffffff" stroke="#2c5282" stroke-width="18" stroke-linejoin="round"/>
+  <path d="M312 560V385h170v175M718 560V390h170v170" fill="#d9edf3" stroke="#2c5282" stroke-width="14"/>
+  <path d="M520 560V440h160v120" fill="#81c7d4" stroke="#2c5282" stroke-width="14"/>
+  <text x="600" y="665" text-anchor="middle" fill="#2c5282" font-family="Arial, sans-serif" font-size="44" font-weight="700">Custom Home Design Image</text>
+</svg>

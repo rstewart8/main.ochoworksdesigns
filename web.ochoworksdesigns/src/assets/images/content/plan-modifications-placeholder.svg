@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">Plan modifications image placeholder</title>
+  <desc id="desc">Placeholder for modifying existing home plans.</desc>
+  <rect width="1200" height="760" fill="#f7f4ef"/>
+  <rect x="210" y="150" width="500" height="430" fill="#ffffff" stroke="#2c5282" stroke-width="16"/>
+  <path d="M280 250h360M280 340h260M280 430h360" stroke="#81c7d4" stroke-width="18" stroke-linecap="round"/>
+  <path d="M735 475l225-225 70 70-225 225-90 20z" fill="#ffffff" stroke="#2c5282" stroke-width="16" stroke-linejoin="round"/>
+  <path d="M922 288l70 70" stroke="#81c7d4" stroke-width="18"/>
+  <text x="600" y="675" text-anchor="middle" fill="#2c5282" font-family="Arial, sans-serif" font-size="44" font-weight="700">Plan Modifications Image</text>
+</svg>

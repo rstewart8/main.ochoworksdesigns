@@ -13,15 +13,15 @@ export class BuildersComponent implements OnInit {
 
   ngOnInit(): void {
     this.seoService.updateSEO({
-      title: 'Home Builder & Contractor Drafting Services',
-      description: 'Partner with OchoWorks Designs for construction-ready home plan sets, plan modifications, custom designs, and drafting support for builders and contractors.',
-      image: '/assets/images/custom-home-rendering-3.jpg',
-      url: 'https://ochoworksdesigns.com/home-builders',
+      title: 'General Contractor & Developer Drafting Services',
+      description: 'Partner with OchoWorks Designs for construction-ready home plan sets, plan modifications, custom designs, and drafting support for general contractors and developers.',
+      image: '/assets/images/featured-plans/mountain-modern-plan-1071.jpg',
+      url: 'https://ochoworksdesigns.com/general-contractors-developers',
       type: 'website',
       schema: {
         '@context': 'https://schema.org',
         '@type': 'Service',
-        name: 'Home Builder and Contractor Drafting Services',
+        name: 'General Contractor and Developer Drafting Services',
         provider: {
           '@type': 'Organization',
           name: 'OchoWorks Designs',
@@ -29,8 +29,8 @@ export class BuildersComponent implements OnInit {
         },
         areaServed: 'United States',
         serviceType: 'Residential architectural design and drafting',
-        url: 'https://ochoworksdesigns.com/home-builders',
-        description: 'Construction-ready plan sets, plan modifications, custom home design, and drafting support for builders and contractors.'
+        url: 'https://ochoworksdesigns.com/general-contractors-developers',
+        description: 'Construction-ready plan sets, plan modifications, custom home design, and drafting support for general contractors and developers.'
       }
     });
   }

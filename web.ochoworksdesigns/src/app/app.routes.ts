@@ -53,14 +53,49 @@ export const routes: Routes = [
     title: 'About Us - OchoWorks Designs'
   },
   {
+    path: 'custom-home-design',
+    loadComponent: () => import('./custom-home-design/custom-home-design.component').then(m => m.CustomHomeDesignComponent),
+    title: 'Custom Home Design Services - OchoWorks Designs'
+  },
+  {
+    path: 'future-homeowners',
+    loadComponent: () => import('./owner-builders/owner-builders.component').then(m => m.OwnerBuildersComponent),
+    title: 'Future Homeowner House Plans - OchoWorks Designs'
+  },
+  {
+    path: 'owner-builders',
+    redirectTo: '/future-homeowners',
+    pathMatch: 'full'
+  },
+  {
+    path: 'plan-modifications',
+    loadComponent: () => import('./plan-modifications/plan-modifications.component').then(m => m.PlanModificationsComponent),
+    title: 'House Plan Modification Services - OchoWorks Designs'
+  },
+  {
+    path: 'construction-ready-plan-sets',
+    loadComponent: () => import('./plan-sets/plan-sets.component').then(m => m.PlanSetsComponent),
+    title: 'Construction-Ready House Plan Sets - OchoWorks Designs'
+  },
+  {
+    path: 'house-plan-styles',
+    loadComponent: () => import('./plan-styles/plan-styles.component').then(m => m.PlanStylesComponent),
+    title: 'House Plan Styles - OchoWorks Designs'
+  },
+  {
     path: 'plans',
     loadComponent: () => import('./plans/plans.component').then(m => m.PlansComponent),
     title: 'Plans - OchoWorks Designs'
   },
   {
-    path: 'home-builders',
+    path: 'general-contractors-developers',
     loadComponent: () => import('./builders/builders.component').then(m => m.BuildersComponent),
-    title: 'Home Builders & Contractors - OchoWorks Designs'
+    title: 'General Contractors & Developers - OchoWorks Designs'
+  },
+  {
+    path: 'home-builders',
+    redirectTo: '/general-contractors-developers',
+    pathMatch: 'full'
   },
 
   {

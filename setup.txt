@@ -1,0 +1,318 @@
+Combined AWS EC2 production setup for OchoWorks repositories
+
+This file covers deploying both repositories on the same EC2 server:
+
+- Public site repo: /var/www/ochoworksdesigns
+- Client/CRM repo: /var/www/client.ochoworksdesigns
+
+Canonical hostnames
+
+- ochoworksdesigns.com -> public Angular SSR app from /var/www/ochoworksdesigns/web.ochoworksdesigns
+- www.ochoworksdesigns.com -> same public Angular SSR app
+- api.ochoworksdesigns.com -> public PHP API from /var/www/ochoworksdesigns/api.ochoworksdesigns
+- client.ochoworksdesigns.com -> client Angular CRM app from /var/www/client.ochoworksdesigns/angular-app
+- clientapi.ochoworksdesigns.com -> client FastAPI backend from /var/www/client.ochoworksdesigns/api
+
+Treat "ochworksdesigns.com" as a typo unless that separate domain is intentionally registered.
+
+Recommended EC2 server
+
+- Ubuntu Server 24.04 LTS x86_64
+- t3a.medium or larger
+- 60 GB gp3 root volume
+- Security group inbound:
+  - 22 from your IP only
+  - 80 from 0.0.0.0/0
+  - 443 from 0.0.0.0/0
+  - 3306 from your trusted office/home IP only, if you need remote MySQL access
+- Do not expose MySQL to 0.0.0.0/0.
+
+Install server packages
+
+```bash
+sudo apt update
+sudo apt install -y nginx mysql-server python3-venv python3-pip git curl unzip cron certbot python3-certbot-nginx
+
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+sudo apt install -y nodejs
+sudo npm install -g pm2
+
+curl -fsSL https://get.docker.com | sudo sh
+sudo usermod -aG docker ubuntu
+```
+
+Log out and SSH back in after adding `ubuntu` to the Docker group.
+
+Filesystem layout
+
+```bash
+sudo mkdir -p /var/www
+sudo mkdir -p /var/log/ochoworksdesigns
+sudo mkdir -p /var/log/clientochoworksdesigns
+sudo chown -R ubuntu:ubuntu /var/www /var/log/ochoworksdesigns /var/log/clientochoworksdesigns
+```
+
+MySQL setup
+
+By default MySQL listens only on the server. If you need to connect remotely from your computer or office, allow only your trusted IP in the AWS security group and create MySQL users for that IP.
+
+Enable MySQL remote listening:
+
+```bash
+sudo cp /etc/mysql/mysql.conf.d/mysqld.cnf /etc/mysql/mysql.conf.d/mysqld.cnf.bak
+sudo nano /etc/mysql/mysql.conf.d/mysqld.cnf
+```
+
+Change:
+
+```ini
+bind-address = 127.0.0.1
+```
+
+To:
+
+```ini
+bind-address = 0.0.0.0
+```
+
+Restart MySQL:
+
+```bash
+sudo systemctl restart mysql
+sudo systemctl status mysql --no-pager
+```
+
+In AWS EC2, update the instance security group:
+
+- Type: MySQL/Aurora
+- Protocol: TCP
+- Port: 3306
+- Source: your trusted public IP as `/32`, for example `203.0.113.10/32`
+- Never use `0.0.0.0/0` for MySQL
+
+Create the local app users and remote-access app users. Replace `YOUR_TRUSTED_PUBLIC_IP` with your real public IP address.
+
+```sql
+CREATE DATABASE ochoworksdesigns CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE clientochoworksdesigns CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+CREATE USER 'ochoworks_api'@'localhost' IDENTIFIED BY 'replace-with-strong-public-api-password';
+CREATE USER 'clientochoworks'@'localhost' IDENTIFIED BY 'replace-with-strong-client-api-password';
+CREATE USER 'ochoworks_api'@'YOUR_TRUSTED_PUBLIC_IP' IDENTIFIED BY 'replace-with-strong-public-api-password';
+CREATE USER 'clientochoworks'@'YOUR_TRUSTED_PUBLIC_IP' IDENTIFIED BY 'replace-with-strong-client-api-password';
+
+GRANT ALL PRIVILEGES ON ochoworksdesigns.* TO 'ochoworks_api'@'localhost';
+GRANT ALL PRIVILEGES ON clientochoworksdesigns.* TO 'clientochoworks'@'localhost';
+GRANT ALL PRIVILEGES ON ochoworksdesigns.* TO 'ochoworks_api'@'YOUR_TRUSTED_PUBLIC_IP';
+GRANT ALL PRIVILEGES ON clientochoworksdesigns.* TO 'clientochoworks'@'YOUR_TRUSTED_PUBLIC_IP';
+FLUSH PRIVILEGES;
+```
+
+Remote MySQL connection examples from your computer:
+
+```bash
+mysql -h <ec2-public-ip-or-hostname> -P 3306 -u ochoworks_api -p ochoworksdesigns
+mysql -h <ec2-public-ip-or-hostname> -P 3306 -u clientochoworks -p clientochoworksdesigns
+```
+
+Clone repositories
+
+```bash
+cd /var/www
+git clone <public-site-repo-url> ochoworksdesigns
+git clone <client-crm-repo-url> client.ochoworksdesigns
+```
+
+Public site setup
+
+```bash
+cd /var/www/ochoworksdesigns
+cp api.ochoworksdesigns/.env.production.example api.ochoworksdesigns/.env
+```
+
+Edit `/var/www/ochoworksdesigns/api.ochoworksdesigns/.env`:
+
+- `ENV=production`
+- `DB_HOST=host.docker.internal`
+- `DB_PORT=3306`
+- `DB_NAME=ochoworksdesigns`
+- `DB_USER=ochoworks_api`
+- `DB_PASSWORD=<public API database password>`
+- `API_BASE_URL=https://api.ochoworksdesigns.com`
+- `APP_BASE_URL=https://ochoworksdesigns.com`
+- `DEBUG=false`
+- Set real values for `API_KEY`, `JWT_SECRET`, `EMAIL_API_KEY`, and `RECAPTCHA_SECRET_KEY`
+
+If this is the first public-site deploy, import the database dump:
+
+```bash
+mysql -u root -p ochoworksdesigns < /var/www/ochoworksdesigns/api.ochoworksdesigns/sqls/dumps/backup.sql
+```
+
+Client/CRM setup
+
+```bash
+cd /var/www/client.ochoworksdesigns
+cp .env.production.example .env.production
+```
+
+Edit `/var/www/client.ochoworksdesigns/.env.production`:
+
+- `DATABASE_URL=mysql+pymysql://clientochoworks:<client DB password>@127.0.0.1:3306/clientochoworksdesigns`
+- `FRONTEND_ORIGIN=https://client.ochoworksdesigns.com`
+- `EMAIL_DELIVERY_MODE=sendgrid`
+- Set real SendGrid and mail settings
+
+Install the client API systemd service:
+
+```bash
+cd /var/www/client.ochoworksdesigns
+sudo cp deploy/systemd/client-ochoworksdesigns-api.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable client-ochoworksdesigns-api
+```
+
+Install the client cron file:
+
+```bash
+sudo cp deploy/cron/client.ochoworksdesigns /etc/cron.d/client.ochoworksdesigns
+sudo chmod 644 /etc/cron.d/client.ochoworksdesigns
+```
+
+Nginx setup for both repos
+
+Use one Nginx site file for all four hostnames:
+
+```nginx
+upstream ochoworksdesigns_web {
+  server 127.0.0.1:4000;
+}
+
+upstream ochoworksdesigns_api {
+  server 127.0.0.1:8888;
+}
+
+upstream client_ochoworksdesigns_api {
+  server 127.0.0.1:8111;
+}
+
+server {
+  listen 80;
+  server_name ochoworksdesigns.com www.ochoworksdesigns.com;
+
+  location / {
+    proxy_pass http://ochoworksdesigns_web;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+}
+
+server {
+  listen 80;
+  server_name api.ochoworksdesigns.com;
+
+  location / {
+    proxy_pass http://ochoworksdesigns_api;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+}
+
+server {
+  listen 80;
+  server_name client.ochoworksdesigns.com;
+
+  root /var/www/client.ochoworksdesigns/angular-app/dist/client-ochoworksdesigns/browser;
+  index index.html;
+
+  location / {
+    try_files $uri $uri/ /index.html;
+  }
+}
+
+server {
+  listen 80;
+  server_name clientapi.ochoworksdesigns.com;
+
+  location / {
+    proxy_pass http://client_ochoworksdesigns_api;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+}
+```
+
+Install it:
+
+```bash
+sudo nano /etc/nginx/sites-available/ochoworksdesigns.conf
+sudo ln -s /etc/nginx/sites-available/ochoworksdesigns.conf /etc/nginx/sites-enabled/ochoworksdesigns.conf
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+Deploy both repositories
+
+Deploy the public site first:
+
+```bash
+cd /var/www/ochoworksdesigns
+chmod +x deploy.sh
+./deploy.sh -b master
+```
+
+Deploy the client/CRM repo second:
+
+```bash
+cd /var/www/client.ochoworksdesigns
+chmod +x deploy.sh
+./deploy.sh -b master
+```
+
+SSL setup
+
+After DNS points to this EC2 server and Nginx answers on port 80:
+
+```bash
+sudo certbot --nginx -d ochoworksdesigns.com -d www.ochoworksdesigns.com
+sudo certbot --nginx -d api.ochoworksdesigns.com
+sudo certbot --nginx -d client.ochoworksdesigns.com
+sudo certbot --nginx -d clientapi.ochoworksdesigns.com
+```
+
+Runtime ports
+
+- Public Angular SSR/PM2: 127.0.0.1:4000
+- Public PHP API Docker container: 127.0.0.1:8888
+- Client FastAPI systemd service: 127.0.0.1:8111
+- Client Angular app: static files served by Nginx
+- MySQL: 127.0.0.1:3306 only
+
+Health checks
+
+```bash
+curl -I http://127.0.0.1:4000
+curl -fsS http://127.0.0.1:8888/api/health
+curl -fsS http://127.0.0.1:8111/health
+pm2 status
+docker compose -f /var/www/ochoworksdesigns/docker-compose.production.yml ps
+sudo systemctl status client-ochoworksdesigns-api --no-pager
+sudo nginx -t
+```
+
+Operational notes
+
+- Run public-site deploys from `/var/www/ochoworksdesigns`.
+- Run client/CRM deploys from `/var/www/client.ochoworksdesigns`.
+- Take MySQL dumps before major deploys.
+- Keep `.env`, `.env.production`, API keys, database passwords, and JWT secrets out of git.
+- MySQL remote access should only be allowed from trusted `/32` IP addresses in AWS.

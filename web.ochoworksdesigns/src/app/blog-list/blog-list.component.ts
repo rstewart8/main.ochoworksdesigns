@@ -111,7 +111,7 @@ export class BlogListComponent implements OnInit, OnDestroy {
       title: 'Custom Home Plans & Design Insights Blog',
       description: 'Discover expert insights on custom home plans, architectural designs, and building tips from OchoWorks Designs. Browse our collection of modern farmhouse, contemporary, and traditional home designs.',
       type: 'website',
-      image: '/assets/images/custom-home-rendering-1.jpg',
+      image: '/assets/images/featured-plans/modern-farmhouse-plan-1075.jpg',
       url: 'https://ochoworksdesigns.com/blog/list',
       schema: {
         '@context': 'https://schema.org',
