@@ -15,6 +15,7 @@ Canonical hostnames
 
 Treat "ochworksdesigns.com" as a typo unless that separate domain is intentionally registered.
 
+
 Recommended EC2 server
 
 - Ubuntu Server 24.04 LTS x86_64
