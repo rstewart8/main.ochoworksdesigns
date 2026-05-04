@@ -90,6 +90,8 @@ echo "Ensuring production directories exist..."
 mkdir -p "$WEB_DIR/logs"
 mkdir -p "$API_DIR/files"
 mkdir -p "$REPO_DIR/var/log/ochoworksdesigns"
+run_privileged chown -R 33:33 "$REPO_DIR/var/log/ochoworksdesigns"
+run_privileged chmod -R u+rwX,g+rwX,o-rwx "$REPO_DIR/var/log/ochoworksdesigns"
 write_web_environment_files
 
 echo "Building Angular SSR frontend..."
