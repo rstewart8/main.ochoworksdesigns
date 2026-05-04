@@ -21,6 +21,8 @@ API_DIR="$REPO_DIR/api.ochoworksdesigns"
 API_ENV_FILE="$API_DIR/.env"
 COMPOSE_FILE="$REPO_DIR/docker-compose.production.yml"
 PM2_APP_NAME="${PM2_APP_NAME:-ochoworks}"
+WEB_API_URL="${WEB_API_URL:-https://main.ochoworksdesigns.com}"
+WEB_RECAPTCHA_SITE_KEY="${WEB_RECAPTCHA_SITE_KEY:-6Ld3o4grAAAAAKUyJe6pyRZO5cOa7otrjZFc5gBX}"
 
 run_privileged() {
   if [ "$(id -u)" -eq 0 ]; then
@@ -35,6 +37,28 @@ run_privileged() {
 
   echo "This step needs root privileges and sudo is not installed: $*"
   exit 1
+}
+
+write_web_environment_files() {
+  mkdir -p "$WEB_DIR/src/environments"
+
+  cat > "$WEB_DIR/src/environments/environment.ts" <<EOF
+export const environment = {
+  production: false,
+  recaptchaSiteKey: '$WEB_RECAPTCHA_SITE_KEY',
+  apiUrl: 'http://localhost:8222',
+  devLoginCredentials: null
+};
+EOF
+
+  cat > "$WEB_DIR/src/environments/environment.prod.ts" <<EOF
+export const environment = {
+  production: true,
+  recaptchaSiteKey: '$WEB_RECAPTCHA_SITE_KEY',
+  apiUrl: '$WEB_API_URL',
+  devLoginCredentials: null
+};
+EOF
 }
 
 echo "========================================"
@@ -66,6 +90,7 @@ echo "Ensuring production directories exist..."
 mkdir -p "$WEB_DIR/logs"
 mkdir -p "$API_DIR/files"
 mkdir -p "$REPO_DIR/var/log/ochoworksdesigns"
+write_web_environment_files
 
 echo "Building Angular SSR frontend..."
 cd "$WEB_DIR"
