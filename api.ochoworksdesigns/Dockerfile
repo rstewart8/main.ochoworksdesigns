@@ -29,7 +29,6 @@ RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf
 
 # Copy application files
 COPY . /var/www/html/
-COPY files/sitemap-dev.xml /var/www/web/public/sitemap.xml
 
 # Install Composer dependencies (if composer.json exists)
 WORKDIR /var/www/html
